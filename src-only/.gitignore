@@ -1,0 +1,45 @@
+﻿# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and runtime data
+db/*.db
+db/*.sqlite
+db/*.sqlite3
+db/*.db-*
+db/*.sqlite-*
+db/*.sqlite3-*
+storage/
+
+# Runtime logs
+*.log
+bun-out.txt
+bun-err.txt
+vite-stdout.log
+vite-stderr.log
+
+# Local analysis / generated artifacts
+prefix_analysis.txt
+comparison.txt
+excel_preview.txt
+audit_report.md
+test-results/
+tests/browser-*.png
+audit-catalog.png
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# All local custom database files and backups
+db/custom.db*
