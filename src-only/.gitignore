@@ -43,3 +43,13 @@ Thumbs.db
 
 # All local custom database files and backups
 db/custom.db*
+.vercel
+.env*
+
+# Temporary engineering artifacts
+product-api.txt
+public-js.txt
+tsc
+*.before-image-fix
+*.bak-encoding
+*.new

@@ -1,5 +1,5 @@
-// ============================================================
-// SHANAN Engineering Knowledge Platform — Catalog Data Access
+﻿// ============================================================
+// SHANAN Engineering Knowledge Platform â€” Catalog Data Access
 // Central data-access layer that fetches from the Bun API.
 //
 // This module replaces the old mockData.ts-based layer with
@@ -9,7 +9,7 @@
 
 import type { Product, Category, Brand, PaginatedResult, CatalogFilters } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 // ---- Sync ID lookups (cached for performance) ----
 let _categoriesCache: Category[] | null = null;
@@ -21,7 +21,7 @@ export async function fetchCategoriesFromApi(): Promise<Category[]> {
     const res = await fetch(`${API_URL}/api/categories`);
     if (!res.ok) return [];
     const data = await res.json();
-    _categoriesCache = (data.categories || []) as Category[];
+    _categoriesCache = (data.categories || []).map((cat: Category) => ({ ...cat, image: cat.image ? (/^https?:\/\//i.test(cat.image) ? cat.image : API_URL + (cat.image.startsWith('/') ? cat.image : '/' + cat.image)) : cat.image })) as Category[];
     return _categoriesCache;
   } catch {
     return [];
@@ -80,7 +80,7 @@ export async function fetchProductById(id: string): Promise<Product | null> {
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  // The API resolves by id, slug, or sku — so slug works directly
+  // The API resolves by id, slug, or sku â€” so slug works directly
   return fetchProductById(slug);
 }
 
@@ -123,7 +123,8 @@ export async function getBrandsWithCounts(): Promise<Brand[]> {
 }
 
 // ---- Legacy synchronous exports (for backward compat with old imports) ----
-// These are empty arrays — consumers should use the async fetch* functions.
+// These are empty arrays â€” consumers should use the async fetch* functions.
 export const categories: Category[] = [];
 export const brands: Brand[] = [];
 export const products: Product[] = [];
+

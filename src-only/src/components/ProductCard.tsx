@@ -16,7 +16,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const category = getCategoryById(product.categoryId) ?? (product.category ? { name: product.category.name, id: product.categoryId } : undefined);
   const brandName = product.brandName ?? product.brand?.name ?? null;
 
-  const imageUrl = product.primaryImage || product.images?.[0]?.url || null;
+  const rawImageUrl = product.primaryImage || product.images?.[0]?.url || null;
+  const imageUrl = rawImageUrl ? (/^https?:\/\//i.test(rawImageUrl) ? rawImageUrl : (import.meta.env.VITE_API_URL || '') + (rawImageUrl.startsWith('/') ? rawImageUrl : '/' + rawImageUrl)) : null;
   const [imgError, setImgError] = useState(false);
   const showImage = imageUrl && !imgError;
 

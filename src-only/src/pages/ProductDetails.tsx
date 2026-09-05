@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchProductById, getCategoryById } from '../data/catalog';
@@ -59,8 +59,8 @@ export default function ProductDetails() {
     return (
       <div className="container" style={{ padding: '40px 0' }}>
         <EmptyState
-          title={t('catalog.noResults')}
-          description={t('catalog.noResultsDesc')}
+          title={t('notFound.productTitle')}
+          description={t('notFound.productDescription')}
           icon={<SearchEmptyIcon />}
           action={<Link to="/catalog" className="btn btn-primary">{t('product.backToCatalog')}</Link>}
         />
@@ -84,7 +84,7 @@ export default function ProductDetails() {
       productName: product.name[locale],
       sku: product.sku,
       quantity: 1,
-      productImage: product.images?.[0]?.url,
+      productImage: getProductImageUrl(product.images?.[0]) ?? imageUrl ?? undefined,
       categoryId: product.categoryId,
       brandId: product.brandId || undefined,
       unit: product.productInfo?.unit ?? undefined,
@@ -101,7 +101,8 @@ export default function ProductDetails() {
   const hasSpecs = product.specifications.length > 0;
   const hasMetadata = product.technicalMetadata.length > 0;
   const hasDocuments = product.documents.length > 0;
-  const imageUrl = product.images?.[0]?.url ?? product.primaryImage ?? null;
+  const getProductImageUrl = (img: any) => { const raw = typeof img === 'string' ? img : (img?.url ?? null); return raw ? (/^https?:\/\//i.test(raw) ? raw : (import.meta.env.VITE_API_URL ?? '') + (raw.startsWith('/') ? raw : '/' + raw)) : null; };
+  const rawImageUrl = typeof product.images?.[0] === 'string' ? product.images?.[0] : (product.images?.[0]?.url ?? product.primaryImage ?? null); const imageUrl = rawImageUrl ? (/^https?:\/\//i.test(rawImageUrl) ? rawImageUrl : (import.meta.env.VITE_API_URL ?? '') + (rawImageUrl.startsWith('/') ? rawImageUrl : '/' + rawImageUrl)) : null;
 
   return (
     <div className="product-detail-page">
@@ -111,7 +112,7 @@ export default function ProductDetails() {
         <header className="print-doc-header">
           <img src="/shanan-logo.png" alt="SHANAN" className="print-doc-logo" />
           <div className="print-doc-title-block">
-            <span className="print-doc-brand">SHANAN — Engineering Knowledge Platform</span>
+            <span className="print-doc-brand">SHANAN â€” Engineering Knowledge Platform</span>
             <span className="print-doc-title">{t('product.print.documentTitle')}</span>
           </div>
           <div className="print-doc-meta">
@@ -189,8 +190,8 @@ export default function ProductDetails() {
             <table className="print-doc-table">
               <thead>
                 <tr>
-                  <th>{locale === 'ar' ? 'الم Specification' : 'Specification'}</th>
-                  <th>{locale === 'ar' ? 'القيمة' : 'Value'}</th>
+                  <th>{locale === 'ar' ? 'Ø§Ù„Ù… Specification' : 'Specification'}</th>
+                  <th>{locale === 'ar' ? 'Ø§Ù„Ù‚ÙŠÙ…Ø©' : 'Value'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -220,9 +221,9 @@ export default function ProductDetails() {
             <table className="print-doc-table">
               <thead>
                 <tr>
-                  <th>{locale === 'ar' ? 'العنوان' : 'Title'}</th>
-                  <th>{locale === 'ar' ? 'النوع' : 'Type'}</th>
-                  <th>{locale === 'ar' ? 'الحجم' : 'Size'}</th>
+                  <th>{locale === 'ar' ? 'Ø§Ù„Ø¹Ù†ÙˆØ§Ù†' : 'Title'}</th>
+                  <th>{locale === 'ar' ? 'Ø§Ù„Ù†ÙˆØ¹' : 'Type'}</th>
+                  <th>{locale === 'ar' ? 'Ø§Ù„Ø­Ø¬Ù…' : 'Size'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,7 +231,7 @@ export default function ProductDetails() {
                   <tr key={doc.id}>
                     <td>{doc.title[locale]}</td>
                     <td>{(doc.fileType || '').toUpperCase()}</td>
-                    <td>{doc.fileSize || '—'}</td>
+                    <td>{doc.fileSize || 'â€”'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -282,7 +283,7 @@ export default function ProductDetails() {
           <div className="product-detail-gallery">
             <div className="product-detail-main-image">
               {(product.images?.length || 0) > 0 ? (
-                <img src={product.images?.[activeImageIdx]?.url} alt={product.images?.[activeImageIdx]?.alt ?? product.name[locale]} />
+                <img src={getProductImageUrl(product.images?.[activeImageIdx]) ?? imageUrl ?? undefined} alt={typeof product.images?.[activeImageIdx]?.alt === 'object' ? (product.images?.[activeImageIdx]?.alt?.[locale] ?? '') : (product.images?.[activeImageIdx]?.alt ?? product.name[locale])} />
               ) : (
                 <div className={`product-detail-image-placeholder placeholder-${category?.slug ?? 'default'}`}>
                   <ProductDetailGlyph slug={category?.slug ?? ''} />
@@ -302,7 +303,7 @@ export default function ProductDetails() {
                     className={`product-detail-thumbnail ${idx === activeImageIdx ? 'product-detail-thumbnail-active' : ''}`}
                     onClick={() => setActiveImageIdx(idx)}
                   >
-                    <img src={img.url} alt={img.alt ?? ''} />
+                    <img src={getProductImageUrl(img) ?? undefined} alt={typeof img === 'string' ? '' : (typeof img?.alt === 'object' ? (img.alt?.[locale] ?? '') : (img.alt ?? ''))} />
                   </button>
                 ))}
               </div>
@@ -370,7 +371,7 @@ export default function ProductDetails() {
               </div>
             )}
 
-            {/* Product Information — real data from productInfo */}
+            {/* Product Information â€” real data from productInfo */}
             {product.productInfo && (product.productInfo.barcode || product.productInfo.unit || product.productInfo.subCategory) && (
               <div className="product-detail-section">
                 <h2 className="product-detail-section-title">{t('product.productInfo')}</h2>
@@ -538,3 +539,10 @@ function ProductDetailGlyph({ slug }: { slug: string }) {
   };
   return <div className="product-detail-image-glyph">{glyphBySlug[slug] ?? <ImagePlaceholderIcon />}</div>;
 }
+
+
+
+
+
+
+

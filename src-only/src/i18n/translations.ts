@@ -474,7 +474,7 @@ export type TranslationKey =
   | 'portal.closedOn'
   | 'portal.creditApplicationLink'
   | 'portal.noCreditApplication'
-  // Admin — Supply Requests management (internal)
+  // Admin â€” Supply Requests management (internal)
   | 'admin.eyebrow'
   | 'admin.title'
   | 'admin.subtitle'
@@ -513,7 +513,7 @@ export type TranslationKey =
   | 'admin.colNotes'
   | 'admin.newRequest'
   | 'admin.browseCatalog'
-  // A9 — Internal Supplier & Agreement Management
+  // A9 â€” Internal Supplier & Agreement Management
   | 'suppliers.eyebrow'
   | 'suppliers.title'
   | 'suppliers.subtitle'
@@ -617,7 +617,7 @@ export type TranslationKey =
   | 'agreements.deactivated'
   | 'agreements.selectProduct'
   | 'agreements.invalidProduct'
-  // A10 — Internal RFQ / Sourcing Workflow
+  // A10 â€” Internal RFQ / Sourcing Workflow
   | 'rfq.eyebrow'
   | 'rfq.title'
   | 'rfq.subtitle'
@@ -688,7 +688,7 @@ export type TranslationKey =
   | 'rfq.responseStateDeclined'
   | 'rfq.startSourcing'
   | 'rfq.startSourcingPrompt'
-  // A11 — Internal Sourcing Evaluation & Decision
+  // A11 â€” Internal Sourcing Evaluation & Decision
   | 'sourcing.eyebrow'
   | 'sourcing.title'
   | 'sourcing.subtitle'
@@ -753,6 +753,13 @@ export type TranslationKey =
   | 'footer.placeholder'
   | 'footer.language'
   | 'footer.company'
+  // Not Found
+  | 'notFound.title'
+  | 'notFound.description'
+  | 'notFound.goHome'
+  | 'notFound.goCatalog'
+  | 'notFound.productTitle'
+  | 'notFound.productDescription'
   // Common
   | 'common.loading'
   | 'common.error'
@@ -766,7 +773,7 @@ export type TranslationKey =
   | 'common.cancel'
   | 'common.prev'
   | 'common.next'
-  // V4 — Internal Opportunity Management Dashboard
+  // V4 â€” Internal Opportunity Management Dashboard
   | 'opps.eyebrow'
   | 'opps.title'
   | 'opps.subtitle'
@@ -873,7 +880,7 @@ export type TranslationKey =
   | 'opps.evidenceParseError'
   | 'opps.relatedUserNone'
   | 'opps.relatedProductNone'
-  // V5 — Deterministic prioritization
+  // V5 â€” Deterministic prioritization
   | 'opps.sortByPriority'
   | 'opps.sortByCreated'
   | 'opps.priorityCritical'
@@ -891,7 +898,7 @@ export type TranslationKey =
   | 'opps.priorityReason'
   | 'opps.prioritySystemComputed'
   | 'opps.prioritySortHint'
-  // V6 — Internal Follow-up Task Queue
+  // V6 â€” Internal Follow-up Task Queue
   | 'opps.sectionTasks'
   | 'opps.sectionTasksDesc'
   | 'opps.tasksTitle'
@@ -1550,7 +1557,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.statsBrands': { en: 'Brands', ar: 'علامة تجارية' },
   'home.statsRequests': { en: 'Requests Processed', ar: 'طلب تمت معالجته' },
   'home.viewAll': { en: 'View All', ar: 'عرض الكل' },
-  'home.placeholderNotice': { en: 'Demo Platform — Product data shown is placeholder content. Real catalog data will be connected from the backend.', ar: 'منصة تجريبية — البيانات المعروضة هي بيانات تجريبية. سيتم ربط بيانات الكتالوج الحقيقية من الخادم.' },
+  'home.placeholderNotice': { en: 'Industrial Supply Platform — Quotation-Based B2B Procurement', ar: 'منصة التوريد الصناعية — مشتريات B2B قائمة على عروض الأسعار' },
   'home.introTitle': { en: 'The SHANAN Platform', ar: 'منصة شانان' },
   'home.introSubtitle': { en: 'A unified engineering knowledge and industrial procurement hub built for professionals.', ar: 'مركز موحد للمعرفة الهندسية والمشتريات الصناعية مصمم للمحترفين.' },
   'home.introText': { en: 'SHANAN connects engineers, contractors, and procurement teams with a curated catalog of industrial products, technical specifications, and a structured supply request workflow — all in one professional platform.', ar: 'تربط شانان المهندسين والمقاولين وفرق المشتريات بكتالوج منسق من المنتجات الصناعية والمواصفات الفنية وسير عمل طلبات التوريد المنظمة — كل ذلك في منصة احترافية واحدة.' },
@@ -1901,7 +1908,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'portal.creditApplicationLink': { en: 'Credit Application', ar: 'طلب الائتمان' },
   'portal.noCreditApplication': { en: 'None (pay by cash)', ar: 'بدون (دفع نقدي)' },
 
-  // ---- Admin — Supply Requests management (internal) ----
+  // ---- Admin â€” Supply Requests management (internal) ----
   'admin.eyebrow': { en: 'Internal · Staff Console', ar: 'داخلي · وحدة الموظفين' },
   'admin.title': { en: 'Supply Requests', ar: 'طلبات التوريد' },
   'admin.subtitle': { en: 'Review supply requests submitted through the public platform.', ar: 'راجع طلبات التوريد المقدمة عبر المنصة العامة.' },
@@ -1941,7 +1948,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'admin.newRequest': { en: 'New Request', ar: 'طلب جديد' },
   'admin.browseCatalog': { en: 'Browse Catalog', ar: 'تصفح الكتالوج' },
 
-  // ---- A9 — Internal Supplier & Agreement Management ----
+  // ---- A9 â€” Internal Supplier & Agreement Management ----
   'suppliers.eyebrow': { en: 'Internal · Suppliers Console', ar: 'داخلي · وحدة الموردين' },
   'suppliers.title': { en: 'Suppliers', ar: 'الموردون' },
   'suppliers.subtitle': { en: 'Manage SHANAN supplier relationships and commercial agreements. Confidential internal data — never exposed to customers.', ar: 'إدارة علاقات الموردين والاتفاقيات التجارية لشانان. بيانات داخلية سرية — لا تُعرض للعملاء.' },
@@ -2047,7 +2054,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'agreements.selectProduct': { en: 'Select a SHANAN product…', ar: 'اختر منتجًا من شانان…' },
   'agreements.invalidProduct': { en: 'Please select a valid SHANAN product.', ar: 'يرجى اختيار منتج شانان صالح.' },
 
-  // ---- A10 — Internal RFQ / Sourcing Workflow ----
+  // ---- A10 â€” Internal RFQ / Sourcing Workflow ----
   'rfq.eyebrow': { en: 'Internal · Sourcing & RFQ Console', ar: 'داخلي · وحدة المصدرية وطلب التسعير' },
   'rfq.title': { en: 'RFQ Sourcing', ar: 'مصدرية طلبات التسعير' },
   'rfq.subtitle': { en: 'Internal RFQ / supplier sourcing workflow linked to customer supply requests. Confidential — never exposed to customers.', ar: 'سير عمل داخلي لطلب التسعير ومصدرية الموردين المرتبط بطلبات توريد العملاء. سري — لا يُعرض للعملاء.' },
@@ -2119,7 +2126,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'rfq.startSourcing': { en: 'Start Sourcing / RFQ', ar: 'بدء المصدرية / طلب التسعير' },
   'rfq.startSourcingPrompt': { en: 'Create an RFQ from this supply request to source suppliers.', ar: 'أنشئ طلب تسعير من طلب التوريد هذا لمصدرة الموردين.' },
 
-  // ---- A11 — Internal Sourcing Evaluation & Decision ----
+  // ---- A11 â€” Internal Sourcing Evaluation & Decision ----
   'sourcing.eyebrow': { en: 'Internal · Sourcing Evaluation', ar: 'داخلي · تقييم المصدرية' },
   'sourcing.title': { en: 'Sourcing Evaluation', ar: 'تقييم المصدرية' },
   'sourcing.subtitle': { en: 'Evaluate available supplier agreements (A9) and RFQ offers (A10) for this supply request. Recommendation is a suggestion only — final decision requires explicit action.', ar: 'تقييم اتفاقيات الموردين المتاحة (A9) وعروض طلبات التسعير (A10) لطلب التوريد هذا. التوصية هي اقتراح فقط — القرار النهائي يتطلب إجراءً صريحًا.' },
@@ -2181,9 +2188,16 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'footer.quickLinks': { en: 'Quick Links', ar: 'روابط سريعة' },
   'footer.contact': { en: 'Contact', ar: 'تواصل' },
   'footer.rights': { en: 'All rights reserved.', ar: 'جميع الحقوق محفوظة.' },
-  'footer.placeholder': { en: 'Demo Platform — Placeholder data', ar: 'منصة تجريبية — بيانات تجريبية' },
+  'footer.placeholder': { en: 'SHANAN Industrial Supply Platform', ar: 'منصة شانان للتوريد الصناعي' },
   'footer.language': { en: 'Language', ar: 'اللغة' },
   'footer.company': { en: 'Company', ar: 'الشركة' },
+
+  'notFound.productTitle': { en: 'Product Not Found', ar: 'المنتج غير موجود' },
+  'notFound.productDescription': { en: 'The product you are looking for does not exist or is no longer available.', ar: 'المنتج الذي تبحث عنه غير موجود أو لم يعد متاحاً.' },
+  'notFound.description': { en: 'The page you are looking for does not exist or has been moved.', ar: 'الصفحة التي تبحث عنها غير موجودة أو تم نقلها.' },
+  'notFound.title': { en: 'Page Not Found', ar: 'الصفحة غير موجودة' },
+  'notFound.goHome': { en: 'Go to Home', ar: 'الذهاب إلى الصفحة الرئيسية' },
+  'notFound.goCatalog': { en: 'Browse Catalog', ar: 'تصفح الكتالوج' },
 
   'common.loading': { en: 'Loading…', ar: 'جارٍ التحميل…' },
   'common.error': { en: 'Something went wrong.', ar: 'حدث خطأ ما.' },
@@ -2198,7 +2212,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'common.prev': { en: 'Previous', ar: 'السابق' },
   'common.next': { en: 'Next', ar: 'التالي' },
 
-  // ---- V4 — Internal Opportunity Management Dashboard ----
+  // ---- V4 â€” Internal Opportunity Management Dashboard ----
   'opps.eyebrow': { en: 'Internal Intelligence', ar: 'ذكاء داخلي' },
   'opps.title': { en: 'Opportunity Management', ar: 'إدارة الفرص' },
   'opps.subtitle': { en: 'Tracked opportunities from customer activity intelligence. Review evidence, assign owners, and record actions.', ar: 'الفرص المتعقّبة من ذكاء نشاط العملاء. راجع الأدلة، عيّن المسؤولين، وسجّل الإجراءات.' },
@@ -2306,7 +2320,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'opps.relatedUserNone': { en: '— (no user)', ar: '— (لا يوجد مستخدم)' },
   'opps.relatedProductNone': { en: '— (no product)', ar: '— (لا يوجد منتج)' },
 
-  // ---- V5 — Deterministic prioritization ----
+  // ---- V5 â€” Deterministic prioritization ----
   'opps.sortByPriority': { en: 'Sort: Priority', ar: 'ترتيب: الأولوية' },
   'opps.sortByCreated': { en: 'Sort: Newest', ar: 'ترتيب: الأحدث' },
   'opps.priorityCritical': { en: 'Critical', ar: 'حرجة' },
@@ -2325,7 +2339,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'opps.prioritySystemComputed': { en: 'System-computed', ar: 'محسوب بواسطة النظام' },
   'opps.prioritySortHint': { en: 'When ON, opportunities are sorted by deterministic priority score (highest first).', ar: 'عند التفعيل، تُرتّب الفرص حسب درجة الأولوية الحتمية (الأعلى أولاً).' },
 
-  // ---- V6 — Internal Follow-up Task Queue ----
+  // ---- V6 â€” Internal Follow-up Task Queue ----
   'opps.sectionTasks': { en: 'Follow-up Tasks', ar: 'مهام المتابعة' },
   'opps.sectionTasksDesc': { en: 'Operational tasks created by internal staff. Distinct from system-generated evidence.', ar: 'مهام تشغيلية ينشئها الموظفون الداخليون. منفصلة عن الأدلة المُنشأة بواسطة النظام.' },
   'opps.tasksTitle': { en: 'Tasks', ar: 'المهام' },

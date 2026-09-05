@@ -43,6 +43,7 @@ import SupplierNotifications from './pages/supplier/SupplierNotifications';
 import SupplierAgreements from './pages/supplier/SupplierAgreements';
 import SupplierAgreementDetail from './pages/supplier/SupplierAgreementDetail';
 import SupplierRegister from './pages/supplier/SupplierRegister';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
@@ -102,6 +103,9 @@ export default function App() {
               <Route path="agreements" element={<SupplierAgreements />} />
               <Route path="agreements/:id" element={<SupplierAgreementDetail />} />
             </Route>
+
+            {/* Catch-all: Not Found */}
+            <Route path="*" element={<><Header /><main className="app-main"><NotFound /></main><Footer /></>} />
           </Routes>
         </div>
       </SupplyRequestProvider>

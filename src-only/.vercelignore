@@ -1,0 +1,9 @@
+﻿db/
+storage/
+*.db
+*.db-shm
+*.db-wal
+*.zip
+*.log
+.env
+.env.*

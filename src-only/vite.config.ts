@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+﻿import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // P3-1: Content-Security-Policy (Stage 2) for the SPA document.
@@ -7,11 +7,11 @@ import react from '@vitejs/plugin-react'
 // stylesheet is served from fonts.googleapis.com (governed by style-src) and the
 // .woff2 files come from fonts.gstatic.com (governed by font-src). No inline or
 // external application scripts or eval are used, so script-src is 'self' (plus a
-// specific SHA-256 hash for @vitejs/plugin-react's dev-only refresh preamble —
+// specific SHA-256 hash for @vitejs/plugin-react's dev-only refresh preamble â€”
 // the hash was observed in the browser dev console; it does not apply to the
 // production bundle which has no inline scripts). CSS is injected as <style> at
 // runtime and the components use pervasive inline style= attributes, so style-src
-// / style-src-attr require 'unsafe-inline' (the application's real dependency —
+// / style-src-attr require 'unsafe-inline' (the application's real dependency â€”
 // there is no nonce/hash infrastructure).
 //
 // Developer-mode HMR needs a WebSocket to the dev server and the API is called
@@ -28,9 +28,9 @@ const PROD_CSP = [
   "script-src 'self'",
   `style-src 'self' 'unsafe-inline' ${GOOGLE_FONTS_STYLES}`,
   "style-src-attr 'unsafe-inline'",
-  "img-src 'self' data: https://images.pexels.com",
+  `img-src 'self' data: https://images.pexels.com ${process.env.VITE_API_URL ? new URL(process.env.VITE_API_URL).origin : ''}`,
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self'",
+  `connect-src 'self' ${process.env.VITE_API_URL ? new URL(process.env.VITE_API_URL).origin : ''}`,
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'self'",
@@ -42,7 +42,7 @@ const DEV_CSP = [
   `script-src 'self' '${DEV_PREAMBLE_HASH}'`,
   `style-src 'self' 'unsafe-inline' ${GOOGLE_FONTS_STYLES}`,
   "style-src-attr 'unsafe-inline'",
-  "img-src 'self' data: https://images.pexels.com",
+  `img-src 'self' data: https://images.pexels.com ${process.env.VITE_API_URL ? new URL(process.env.VITE_API_URL).origin : ''}`,
   "font-src 'self' https://fonts.gstatic.com",
   "connect-src 'self' http://localhost:3001 ws://localhost:3000",
   "object-src 'none'",
@@ -80,3 +80,10 @@ export default defineConfig({
     },
   },
 })
+
+
+
+
+
+
+
