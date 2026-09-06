@@ -1,7 +1,10 @@
-import { sql } from './postgres';
+import postgres from 'postgres';
 
-export default async function handler(req: Request) {
-  if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'content-type': 'application/json' } });
+const url = process.env.SUPABASE_DB_URL;
+if (!url) throw new Error('SUPABASE_DB_URL is required');
+const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false });
+
+export async function GET(req: Request) {
   try {
     const rows = await sql`
       SELECT b.id, b.slug, b.name, b.name_ar, b.logo_url,

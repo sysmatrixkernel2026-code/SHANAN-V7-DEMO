@@ -1,7 +1,10 @@
-import { sql } from './postgres';
+import postgres from 'postgres';
 
-export default async function handler(req: Request) {
-  if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'content-type': 'application/json' } });
+const url = process.env.SUPABASE_DB_URL;
+if (!url) throw new Error('SUPABASE_DB_URL is required');
+const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false });
+
+export async function GET(req: Request) {
   try {
     const rows = await sql`
       SELECT c.id, c.slug, c.name_en, c.name_ar, c.description_en, c.description_ar,
@@ -12,11 +15,11 @@ export default async function handler(req: Request) {
        ORDER BY c.sort_order ASC, c.name_en ASC`;
 
     const catImages = await sql`
-      SELECT p.category_id, COALESCE(pi.public_url, pi.storage_key) AS img_url
+      SELECT DISTINCT ON (p.category_id) p.category_id, COALESCE(pi.public_url, pi.storage_key) AS img_url
         FROM product_images pi
         JOIN products p ON pi.product_id = p.id
        WHERE pi.is_primary = 1 AND p.status = 'active'
-       GROUP BY p.category_id`;
+       ORDER BY p.category_id, pi.id`;
 
     const imgMap: Record<string, string> = {};
     for (const row of catImages) imgMap[(row as any).category_id] = (row as any).img_url;

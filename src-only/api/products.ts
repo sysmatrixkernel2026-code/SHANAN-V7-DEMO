@@ -1,43 +1,46 @@
-import { sql } from './postgres';
+import postgres from 'postgres';
 
-export default async function handler(req: Request) {
-  if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'content-type': 'application/json' } });
+const url = process.env.SUPABASE_DB_URL;
+if (!url) throw new Error('SUPABASE_DB_URL is required');
+const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false });
 
+export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') || '24', 10)));
-    const search = url.searchParams.get('search')?.trim() || '';
-    const categoryId = url.searchParams.get('categoryId');
-    const brandId = url.searchParams.get('brandId');
-    const availability = url.searchParams.get('availability');
-    const sortBy = url.searchParams.get('sortBy') || 'name_asc';
+    const rUrl = new URL(req.url);
+    const page = Math.max(1, parseInt(rUrl.searchParams.get('page') || '1', 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(rUrl.searchParams.get('pageSize') || '24', 10)));
+    const search = rUrl.searchParams.get('search')?.trim() || '';
+    const categoryId = rUrl.searchParams.get('categoryId');
+    const brandId = rUrl.searchParams.get('brandId');
+    const availability = rUrl.searchParams.get('availability');
+    const sortBy = rUrl.searchParams.get('sortBy') || 'name_asc';
 
     const conditions: string[] = ["p.status = 'active'", "p.is_sample_data = 0"];
     const params: any[] = [];
 
     if (search) {
-      conditions.push("(p.name_en ILIKE ${search} OR p.name_ar ILIKE ${search} OR p.sku ILIKE ${search} OR p.product_code ILIKE ${search} OR p.manufacturer ILIKE ${search})");
       params.push(`%${search}%`);
+      const idx = params.length;
+      conditions.push(`(p.name_en ILIKE $${idx} OR p.name_ar ILIKE $${idx} OR p.sku ILIKE $${idx} OR p.product_code ILIKE $${idx} OR p.manufacturer ILIKE $${idx})`);
     }
     if (categoryId) {
-      conditions.push('p.category_id = ${categoryId}');
       params.push(categoryId);
+      conditions.push(`p.category_id = $${params.length}`);
     }
     if (brandId) {
       if (brandId === 'brand-dyllu') {
         conditions.push("p.name_en ILIKE '%DYLLU%'");
       } else {
-        conditions.push('p.brand_id = ${brandId}');
         params.push(brandId);
+        conditions.push(`p.brand_id = $${params.length}`);
         if (brandId === 'brand-hans') {
           conditions.push("p.name_en NOT LIKE 'Hansطقم%'");
         }
       }
     }
     if (availability) {
-      conditions.push('p.availability = ${availability}');
       params.push(availability);
+      conditions.push(`p.availability = $${params.length}`);
     }
 
     const where = conditions.join(' AND ');
