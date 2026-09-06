@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedText, hasLocalizedText } from '../i18n/localization';
 import { fetchProductById, getCategoryById } from '../data/catalog';
 import { trackEvent, ActivityEvents } from '../data/activity';
 import type { Locale, Product } from '../types';
@@ -32,13 +33,15 @@ export default function ProductDetails() {
   const { t, locale } = useLanguage();
   const { addItem } = useSupplyRequest();
 
-  const [product, setProduct] = useState<Product | null>(null);
+const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [mainImageError, setMainImageError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setMainImageError(false);
     fetchProductById(id)
       .then(p => {
         setProduct(p);
@@ -78,10 +81,10 @@ export default function ProductDetails() {
     on_request: { class: 'badge-info', label: t('catalog.avail.on_request') },
   }[product.availability];
 
-  const handleAddToSupply = () => {
+const handleAddToSupply = () => {
     addItem({
       productId: product.id,
-      productName: product.name[locale],
+      productName: getLocalizedText(product.name, locale),
       sku: product.sku,
       quantity: 1,
       productImage: getProductImageUrl(product.images?.[0]) ?? imageUrl ?? undefined,
@@ -112,7 +115,7 @@ export default function ProductDetails() {
         <header className="print-doc-header">
           <img src="/shanan-logo.png" alt="SHANAN" className="print-doc-logo" />
           <div className="print-doc-title-block">
-            <span className="print-doc-brand">SHANAN â€” Engineering Knowledge Platform</span>
+            <span className="print-doc-brand">SHANAN — Engineering Knowledge Platform</span>
             <span className="print-doc-title">{t('product.print.documentTitle')}</span>
           </div>
           <div className="print-doc-meta">
@@ -123,13 +126,13 @@ export default function ProductDetails() {
         {/* PRODUCT SUMMARY */}
         <section className="print-doc-section">
           <div className="print-doc-product-row">
-            {imageUrl && (
+{imageUrl && (
               <div className="print-doc-image-wrap">
-                <img src={imageUrl} alt={product.name[locale]} className="print-doc-image" />
+                <img src={imageUrl} alt={getLocalizedText(product.name, locale)} className="print-doc-image" />
               </div>
             )}
             <div className="print-doc-product-info">
-              <h1 className="print-doc-product-name">{product.name[locale]}</h1>
+              <h1 className="print-doc-product-name">{getLocalizedText(product.name, locale)}</h1>
               <div className="print-doc-meta-grid">
                 <div className="print-doc-meta-item">
                   <dt>{t('product.print.productReference')}</dt>
@@ -141,10 +144,10 @@ export default function ProductDetails() {
                     <dd>{brand.name}</dd>
                   </div>
                 )}
-                {category && (
+{category && (
                   <div className="print-doc-meta-item">
                     <dt>{t('product.category')}</dt>
-                    <dd>{category.name[locale]}</dd>
+                    <dd>{getLocalizedText(category.name, locale)}</dd>
                   </div>
                 )}
                 {product.productInfo?.subCategory && (
@@ -187,23 +190,23 @@ export default function ProductDetails() {
         <section className="print-doc-section">
           <h2 className="print-doc-section-title">{t('product.print.specifications')}</h2>
           {hasSpecs || hasMetadata ? (
-            <table className="print-doc-table">
+<table className="print-doc-table">
               <thead>
                 <tr>
-                  <th>{locale === 'ar' ? 'Ø§Ù„Ù… Specification' : 'Specification'}</th>
-                  <th>{locale === 'ar' ? 'Ø§Ù„Ù‚ÙŠÙ…Ø©' : 'Value'}</th>
+                  <th>{t('product.print.specHeader')}</th>
+                  <th>{t('product.print.valueHeader')}</th>
                 </tr>
               </thead>
               <tbody>
                 {product.specifications.map(spec => (
                   <tr key={spec.id}>
-                    <td>{spec.label[locale]}</td>
-                    <td>{spec.value[locale]}</td>
+                    <td>{getLocalizedText(spec.label, locale)}</td>
+                    <td>{getLocalizedText(spec.value, locale)}</td>
                   </tr>
                 ))}
                 {product.technicalMetadata.map((meta, idx) => (
                   <tr key={`meta-${idx}`}>
-                    <td>{meta.key[locale]}</td>
+                    <td>{getLocalizedText(meta.key, locale)}</td>
                     <td>{meta.value}</td>
                   </tr>
                 ))}
@@ -218,20 +221,20 @@ export default function ProductDetails() {
         <section className="print-doc-section">
           <h2 className="print-doc-section-title">{t('product.print.tdsTitle')}</h2>
           {hasDocuments ? (
-            <table className="print-doc-table">
+<table className="print-doc-table">
               <thead>
                 <tr>
-                  <th>{locale === 'ar' ? 'Ø§Ù„Ø¹Ù†ÙˆØ§Ù†' : 'Title'}</th>
-                  <th>{locale === 'ar' ? 'Ø§Ù„Ù†ÙˆØ¹' : 'Type'}</th>
-                  <th>{locale === 'ar' ? 'Ø§Ù„Ø­Ø¬Ù…' : 'Size'}</th>
+                  <th>{t('product.print.titleHeader')}</th>
+                  <th>{t('product.print.typeHeader')}</th>
+                  <th>{t('product.print.sizeHeader')}</th>
                 </tr>
               </thead>
               <tbody>
                 {product.documents.map(doc => (
                   <tr key={doc.id}>
-                    <td>{doc.title[locale]}</td>
+                    <td>{getLocalizedText(doc.title, locale)}</td>
                     <td>{(doc.fileType || '').toUpperCase()}</td>
-                    <td>{doc.fileSize || 'â€”'}</td>
+                    <td>{doc.fileSize || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -266,11 +269,11 @@ export default function ProductDetails() {
           {category && (
             <>
               <span className="breadcrumb-sep">/</span>
-              <Link to={`/catalog?category=${category.id}`}>{category.name[locale]}</Link>
+<Link to={`/catalog?category=${category.id}`}>{getLocalizedText(category.name, locale)}</Link>
             </>
           )}
           <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-current">{product.name[locale]}</span>
+          <span className="breadcrumb-current">{getLocalizedText(product.name, locale)}</span>
         </nav>
 
         <Link to="/catalog" className="btn btn-ghost btn-sm" style={{ marginBottom: 24 }}>
@@ -281,14 +284,18 @@ export default function ProductDetails() {
         <div className="product-detail-layout">
           {/* Image Gallery */}
           <div className="product-detail-gallery">
-            <div className="product-detail-main-image">
-              {(product.images?.length || 0) > 0 ? (
-                <img src={getProductImageUrl(product.images?.[activeImageIdx]) ?? imageUrl ?? undefined} alt={typeof product.images?.[activeImageIdx]?.alt === 'object' ? (product.images?.[activeImageIdx]?.alt?.[locale] ?? '') : (product.images?.[activeImageIdx]?.alt ?? product.name[locale])} />
+<div className="product-detail-main-image">
+              {((product.images?.length || 0) > 0) && !mainImageError ? (
+                <img
+                  src={getProductImageUrl(product.images?.[activeImageIdx]) ?? imageUrl ?? undefined}
+                  alt={getLocalizedText(product.name, locale)}
+                  onError={() => setMainImageError(true)}
+                />
               ) : (
                 <div className={`product-detail-image-placeholder placeholder-${category?.slug ?? 'default'}`}>
                   <ProductDetailGlyph slug={category?.slug ?? ''} />
                   <div className="product-detail-image-meta">
-                    <span className="product-detail-image-cat">{category ? category.name[locale] : ''}</span>
+                    <span className="product-detail-image-cat">{category ? getLocalizedText(category.name, locale) : ''}</span>
                     <span className="product-detail-image-sku">{product.sku}</span>
                     <span className="product-detail-image-tag">{t('product.noImage')}</span>
                   </div>
@@ -303,7 +310,7 @@ export default function ProductDetails() {
                     className={`product-detail-thumbnail ${idx === activeImageIdx ? 'product-detail-thumbnail-active' : ''}`}
                     onClick={() => setActiveImageIdx(idx)}
                   >
-                    <img src={getProductImageUrl(img) ?? undefined} alt={typeof img === 'string' ? '' : (typeof img?.alt === 'object' ? (img.alt?.[locale] ?? '') : (img.alt ?? ''))} />
+                    <img src={getProductImageUrl(img) ?? undefined} alt={typeof img === 'string' ? '' : (typeof img?.alt === 'object' ? (getLocalizedText(img.alt as any, locale) ?? '') : (img.alt ?? ''))} />
                   </button>
                 ))}
               </div>
@@ -312,9 +319,9 @@ export default function ProductDetails() {
 
           {/* Info Panel */}
           <div className="product-detail-info">
-            <div className="product-detail-info-header">
-              {category && <span className="product-detail-category">{category.name[locale]}</span>}
-              <h1 className="product-detail-name">{product.name[locale]}</h1>
+<div className="product-detail-info-header">
+              {category && <span className="product-detail-category">{getLocalizedText(category.name, locale)}</span>}
+              <h1 className="product-detail-name">{getLocalizedText(product.name, locale)}</h1>
               <span className={`badge ${availabilityBadge.class}`}>{availabilityBadge.label}</span>
             </div>
 
@@ -364,14 +371,14 @@ export default function ProductDetails() {
               <p className="product-detail-pricing-note">{t('product.indicativeNote')}</p>
             </div>
 
-            {product.description && (
+{hasLocalizedText(product.description) && (
               <div className="product-detail-section">
                 <h2 className="product-detail-section-title">{t('product.description')}</h2>
-                <p className="product-detail-description">{product.description[locale]}</p>
+                <p className="product-detail-description">{getLocalizedText(product.description, locale)}</p>
               </div>
             )}
 
-            {/* Product Information â€” real data from productInfo */}
+            {/* Product Information — real data from productInfo */}
             {product.productInfo && (product.productInfo.barcode || product.productInfo.unit || product.productInfo.subCategory) && (
               <div className="product-detail-section">
                 <h2 className="product-detail-section-title">{t('product.productInfo')}</h2>
@@ -388,7 +395,7 @@ export default function ProductDetails() {
                       <span className="spec-value">{product.productInfo.unit}</span>
                     </div>
                   )}
-                  {product.productInfo.subCategory && (
+{product.productInfo.subCategory && (
                     <div className="spec-row">
                       <span className="spec-label">{t('product.subCategory')}</span>
                       <span className="spec-value">{product.productInfo.subCategory}</span>
@@ -428,8 +435,8 @@ export default function ProductDetails() {
             <div className="spec-table">
               {product.specifications.map(spec => (
                 <div key={spec.id} className="spec-row">
-                  <span className="spec-label">{spec.label[locale]}</span>
-                  <span className="spec-value">{spec.value[locale]}</span>
+<span className="spec-label">{getLocalizedText(spec.label, locale)}</span>
+                  <span className="spec-value">{getLocalizedText(spec.value, locale)}</span>
                 </div>
               ))}
             </div>
@@ -445,7 +452,7 @@ export default function ProductDetails() {
             <div className="spec-table">
               {product.technicalMetadata.map((meta, idx) => (
                 <div key={idx} className="spec-row">
-                  <span className="spec-label">{meta.key[locale]}</span>
+                  <span className="spec-label">{getLocalizedText(meta.key, locale)}</span>
                   <span className="spec-value">{meta.value}</span>
                 </div>
               ))}
@@ -464,7 +471,7 @@ export default function ProductDetails() {
                 <a key={doc.id} href={doc.url} className="document-card" target="_blank" rel="noopener noreferrer">
                   <div className="document-icon">{fileTypeLabels[doc.fileType] ?? 'FILE'}</div>
                   <div className="document-info">
-                    <span className="document-title">{doc.title[locale]}</span>
+                    <span className="document-title">{getLocalizedText(doc.title, locale)}</span>
                     {doc.fileSize && <span className="document-size">{doc.fileSize}</span>}
                   </div>
                   <DownloadIcon />

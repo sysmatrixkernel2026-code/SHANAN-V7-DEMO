@@ -157,6 +157,9 @@ export type TranslationKey =
   | 'catalog.results'
   | 'catalog.noResults'
   | 'catalog.noResultsDesc'
+  | 'catalog.loadFailed'
+  | 'catalog.loadFailedDesc'
+  | 'catalog.retry'
   | 'catalog.loading'
   | 'catalog.filters'
   | 'catalog.filterCategory'
@@ -240,6 +243,11 @@ export type TranslationKey =
   | 'product.print.productReference'
   | 'product.print.availability'
   | 'product.print.specifications'
+  | 'product.print.specHeader'
+  | 'product.print.valueHeader'
+  | 'product.print.titleHeader'
+  | 'product.print.typeHeader'
+  | 'product.print.sizeHeader'
   | 'product.print.noSpecsMessage'
   | 'product.print.tdsTitle'
   | 'product.print.tdsSubtitle'
@@ -1588,6 +1596,9 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'catalog.results': { en: 'products found', ar: 'منتج' },
   'catalog.noResults': { en: 'No products found', ar: 'لا توجد منتجات' },
   'catalog.noResultsDesc': { en: 'Try adjusting your search or filters to find what you need.', ar: 'حاول تعديل البحث أو المرشحات للعثور على ما تحتاجه.' },
+  'catalog.loadFailed': { en: 'Could not load products', ar: 'تعذر تحميل المنتجات' },
+  'catalog.loadFailedDesc': { en: 'Something went wrong while contacting the catalog. Please try again.', ar: 'حدث خطأ أثناء الاتصال بالكتالوج. يرجى المحاولة مرة أخرى.' },
+  'catalog.retry': { en: 'Retry', ar: 'إعادة المحاولة' },
   'catalog.loading': { en: 'Loading products…', ar: 'جارٍ تحميل المنتجات…' },
   'catalog.filters': { en: 'Filters', ar: 'المرشحات' },
   'catalog.filterCategory': { en: 'Category', ar: 'الفئة' },
@@ -1671,6 +1682,11 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'product.print.productReference': { en: 'Product Reference', ar: 'مرجع المنتج' },
   'product.print.availability': { en: 'Availability', ar: 'التوفر' },
   'product.print.specifications': { en: 'Technical Specifications', ar: 'المواصفات الفنية' },
+  'product.print.specHeader': { en: 'Specification', ar: 'المواصفة' },
+  'product.print.valueHeader': { en: 'Value', ar: 'القيمة' },
+  'product.print.titleHeader': { en: 'Title', ar: 'العنوان' },
+  'product.print.typeHeader': { en: 'Type', ar: 'النوع' },
+  'product.print.sizeHeader': { en: 'Size', ar: 'الحجم' },
   'product.print.noSpecsMessage': { en: 'No verified technical specifications available for this product yet.', ar: 'لا تتوفر حالياً مواصفات فنية موثقة لهذا المنتج.' },
   'product.print.tdsTitle': { en: 'Technical Data Sheet (TDS)', ar: 'ورقة المواصفات الفنية (TDS)' },
   'product.print.tdsSubtitle': { en: 'Technical Document', ar: 'وثيقة تقنية' },

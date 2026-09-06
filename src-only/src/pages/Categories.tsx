@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedText, hasLocalizedText } from '../i18n/localization';
 import { getCategoriesWithCounts } from '../data/catalog';
 import type { Category } from '../types';
 import { ArrowIcon, SearchIcon } from '../components/icons';
@@ -55,7 +56,7 @@ function CategoryCard({ cat, index }: { cat: Category; index: number }) {
             <img
               className="category-page-card-img"
               src={cat.image!}
-              alt={cat.name[locale]}
+              alt={getLocalizedText(cat.name, locale)}
               loading="lazy"
             />
           ) : (
@@ -65,9 +66,9 @@ function CategoryCard({ cat, index }: { cat: Category; index: number }) {
           )}
         </div>
         <div className="category-page-card-body">
-          <h3 className="category-page-card-name">{cat.name[locale]}</h3>
-          {cat.description?.[locale] && (
-            <p className="category-page-card-desc">{cat.description[locale]}</p>
+          <h3 className="category-page-card-name">{getLocalizedText(cat.name, locale)}</h3>
+          {hasLocalizedText(cat.description) && (
+            <p className="category-page-card-desc">{getLocalizedText(cat.description, locale)}</p>
           )}
           <div className="category-page-card-footer">
             <span className="category-page-card-count">
@@ -104,9 +105,10 @@ export default function Categories() {
     return categories.filter(c =>
       c.name.en?.toLowerCase().includes(q) ||
       c.name.ar?.includes(search) ||
+      getLocalizedText(c.name, locale).toLowerCase().includes(q) ||
       c.id.toLowerCase().includes(q)
     );
-  }, [categories, search]);
+  }, [categories, search, locale]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

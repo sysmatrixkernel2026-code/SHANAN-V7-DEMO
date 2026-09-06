@@ -9,7 +9,12 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const segments = url.pathname.split('/');
-    const idOrSlug = decodeURIComponent(segments[segments.length - 1]);
+    let idOrSlug: string;
+    try {
+      idOrSlug = decodeURIComponent(segments[segments.length - 1]);
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid product identifier' }), { status: 400, headers: { 'content-type': 'application/json' } });
+    }
     if (!idOrSlug) return new Response(JSON.stringify({ error: 'Product ID is required' }), { status: 400, headers: { 'content-type': 'application/json' } });
 
     const productRows = await sql.unsafe(

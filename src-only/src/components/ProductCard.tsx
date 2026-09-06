@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedText } from '../i18n/localization';
 import { getCategoryById } from '../data/catalog';
 import { useSupplyRequest } from '../context/SupplyRequestContext';
 import { RequestIcon } from './icons';
@@ -36,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.stopPropagation();
     addItem({
       productId: product.id,
-      productName: product.name[locale],
+      productName: getLocalizedText(product.name, locale),
       sku: product.sku,
       quantity: 1,
       productImage: imageUrl || undefined,
@@ -53,7 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <img
               className="product-card-photo"
               src={imageUrl}
-              alt={product.name[locale]}
+              alt={getLocalizedText(product.name, locale)}
               loading="lazy"
               onError={() => setImgError(true)}
             />
@@ -76,11 +77,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="product-card-body">
         {category && (
-          <span className="product-card-category">{category.name[locale]}</span>
+          <span className="product-card-category">{getLocalizedText(category.name, locale)}</span>
         )}
 
         <Link to={`/product/${product.id}`} className="product-card-name-link">
-          <h3 className="product-card-name">{product.name[locale]}</h3>
+          <h3 className="product-card-name">{getLocalizedText(product.name, locale)}</h3>
         </Link>
 
         <div className="product-card-meta-row">

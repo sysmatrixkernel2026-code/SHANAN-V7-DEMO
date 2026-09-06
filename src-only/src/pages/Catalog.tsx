@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedText, hasLocalizedText } from '../i18n/localization';
 import { fetchProducts, fetchCategoriesFromApi, fetchBrandsFromApi } from '../data/catalog';
 import { trackEvent, ActivityEvents } from '../data/activity';
 import type { Category, Brand } from '../types';
 import type { Product, CatalogFilters } from '../types';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
-import { LoadingState, EmptyState } from '../components/LoadingEmptyStates';
+import { LoadingState, EmptyState, ErrorState } from '../components/LoadingEmptyStates';
 import { FilterIcon, CloseIcon, SearchIcon, SearchEmptyIcon } from '../components/icons';
 
 const AVAILABILITY_OPTIONS = [
@@ -29,13 +30,14 @@ export default function Catalog() {
   const { t, locale } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const initialPage = parseInt(searchParams.get('page') ?? '1', 10);
   const [filters, setFilters] = useState<CatalogFilters>({
     search: searchParams.get('search') ?? '',
     categoryId: searchParams.get('category') ?? null,
     brandId: searchParams.get('brand') ?? null,
     availability: searchParams.get('availability') ?? null,
     sortBy: 'newest',
-    page: parseInt(searchParams.get('page') ?? '1', 10),
+    page: Number.isFinite(initialPage) && initialPage >= 1 ? initialPage : 1,
     pageSize: 24,
   });
 
@@ -45,7 +47,43 @@ export default function Catalog() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Search input is debounced so typing does not fire one API call per keystroke.
+  const [searchDraft, setSearchDraft] = useState(searchParams.get('search') ?? '');
+  const searchTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (searchTimer.current !== null) window.clearTimeout(searchTimer.current);
+    searchTimer.current = window.setTimeout(() => {
+      searchTimer.current = null;
+      setFilters(prev => (prev.search === searchDraft ? prev : { ...prev, search: searchDraft, page: 1 }));
+    }, 350);
+    return () => {
+      if (searchTimer.current !== null) window.clearTimeout(searchTimer.current);
+    };
+  }, [searchDraft]);
+
+  // Keep filters in sync with the URL (header search, back/forward, deep links).
+  useEffect(() => {
+    const nextSearch = searchParams.get('search') ?? '';
+    const nextCategoryId = searchParams.get('category') ?? null;
+    const nextBrandId = searchParams.get('brand') ?? null;
+    const nextAvailability = searchParams.get('availability') ?? null;
+    const nextPage = parseInt(searchParams.get('page') ?? '1', 10);
+    const page = Number.isFinite(nextPage) && nextPage >= 1 ? nextPage : 1;
+    setSearchDraft(nextSearch);
+    setFilters(prev =>
+      prev.search === nextSearch &&
+      prev.categoryId === nextCategoryId &&
+      prev.brandId === nextBrandId &&
+      prev.availability === nextAvailability &&
+      prev.page === page
+        ? prev
+        : { ...prev, search: nextSearch, categoryId: nextCategoryId, brandId: nextBrandId, availability: nextAvailability, page },
+    );
+  }, [searchParams]);
 
   const topCategories = useMemo(() => {
     if (categories.length === 0) return [];
@@ -62,17 +100,29 @@ export default function Catalog() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       if (filters.search.trim()) {
         trackEvent(ActivityEvents.PRODUCT_SEARCHED, { metadata: filters.search.slice(0, 100) });
       }
       const result = await fetchProducts(filters);
-      setProducts(result.items);
-      setTotal(result.total);
-      setTotalPages(result.totalPages);
+      if (result.error) {
+        setProducts([]);
+        setTotal(0);
+        setLoadError(true);
+      } else {
+        setProducts(result.items);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        // Reconcile when the API clamped the page (e.g. ?page=999 beyond the last page).
+        if (result.page !== filters.page) {
+          setFilters(prev => (prev.page === result.page ? prev : { ...prev, page: result.page }));
+        }
+      }
     } catch {
       setProducts([]);
       setTotal(0);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -103,6 +153,7 @@ export default function Catalog() {
   };
 
   const clearFilters = () => {
+    setSearchDraft('');
     setFilters({
       search: '',
       categoryId: null,
@@ -117,7 +168,7 @@ export default function Catalog() {
   const hasActiveFilters = filters.search || filters.categoryId || filters.brandId || filters.availability;
   const showHero = !hasActiveFilters && filters.page === 1;
   const showShowcase = showHero;
-  const activeCategoryName = activeCategory?.name[locale];
+  const activeCategoryName = activeCategory ? getLocalizedText(activeCategory.name, locale) : null;
   const activeBrandName = brands.find(b => b.id === filters.brandId)?.name;
 
   return (
@@ -138,8 +189,8 @@ export default function Catalog() {
                 type="search"
                 className="catalog-hero-search-input"
                 placeholder={t('catalog.heroSearchPlaceholder')}
-                value={filters.search}
-                onChange={e => updateFilter('search', e.target.value)}
+                value={searchDraft}
+                onChange={e => setSearchDraft(e.target.value)}
                 aria-label={t('nav.search')}
               />
             </form>
@@ -161,13 +212,13 @@ export default function Catalog() {
                   key={cat.id}
                   className="catalog-showcase-card"
                   onClick={() => updateFilter('categoryId', cat.id)}
-                  aria-label={`${cat.name[locale]} — ${cat.productCount} ${t('catalog.productCount')}`}
+                  aria-label={`${getLocalizedText(cat.name, locale)} — ${cat.productCount} ${t('catalog.productCount')}`}
                 >
                   <div className="catalog-showcase-card-img">
                     {cat.image ? (
                       <img
                         src={cat.image}
-                        alt={cat.name[locale]}
+                        alt={getLocalizedText(cat.name, locale)}
                         loading="lazy"
                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
@@ -179,7 +230,7 @@ export default function Catalog() {
                     <div className="catalog-showcase-card-overlay" />
                   </div>
                   <div className="catalog-showcase-card-body">
-                    <span className="catalog-showcase-card-name">{cat.name[locale]}</span>
+                    <span className="catalog-showcase-card-name">{getLocalizedText(cat.name, locale)}</span>
                     <span className="catalog-showcase-card-count">{cat.productCount} {t('catalog.productCount')}</span>
                   </div>
                 </button>
@@ -225,7 +276,7 @@ export default function Catalog() {
               {activeCategory.image ? (
                 <img
                   src={activeCategory.image}
-                  alt={activeCategory.name[locale]}
+                  alt={getLocalizedText(activeCategory.name, locale)}
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
@@ -235,14 +286,14 @@ export default function Catalog() {
               )}
             </div>
             <div className="catalog-category-context-info">
-              <h2 className="catalog-category-context-name">{activeCategory.name[locale]}</h2>
+              <h2 className="catalog-category-context-name">{getLocalizedText(activeCategory.name, locale)}</h2>
               <span className="catalog-category-context-count">
                 {!loading && (
                   <>{total.toLocaleString()} {t('catalog.results')}</>
                 )}
               </span>
-              {activeCategory.description?.[locale] && (
-                <p className="catalog-category-context-desc">{activeCategory.description[locale]}</p>
+              {hasLocalizedText(activeCategory.description) && (
+                <p className="catalog-category-context-desc">{getLocalizedText(activeCategory.description, locale)}</p>
               )}
             </div>
             <button
@@ -279,7 +330,7 @@ export default function Catalog() {
               >
                 <option value="">{t('catalog.allCategories')}</option>
                 {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name[locale]}</option>
+                  <option key={cat.id} value={cat.id}>{getLocalizedText(cat.name, locale)}</option>
                 ))}
               </select>
             </div>
@@ -353,8 +404,8 @@ export default function Catalog() {
                   type="search"
                   className="catalog-search-input"
                   placeholder={t('catalog.searchPlaceholder')}
-                  value={filters.search}
-                  onChange={e => updateFilter('search', e.target.value)}
+                  value={searchDraft}
+                  onChange={e => setSearchDraft(e.target.value)}
                   aria-label={t('nav.search')}
                 />
               </form>
@@ -391,7 +442,7 @@ export default function Catalog() {
                 {filters.search && (
                   <span className="catalog-chip">
                     "{filters.search}"
-                    <button className="catalog-chip-remove" onClick={() => updateFilter('search', '')}>×</button>
+                    <button className="catalog-chip-remove" onClick={() => setSearchDraft('')}>×</button>
                   </span>
                 )}
                 {filters.availability && (
@@ -409,6 +460,14 @@ export default function Catalog() {
             {/* Products */}
             {loading ? (
               <LoadingState count={24} />
+            ) : loadError ? (
+              <ErrorState
+                title={t('catalog.loadFailed')}
+                description={t('catalog.loadFailedDesc')}
+                icon={<SearchEmptyIcon />}
+                onRetry={() => loadProducts()}
+                retryLabel={t('catalog.retry')}
+              />
             ) : products.length === 0 ? (
               <EmptyState
                 title={t('catalog.noResults')}

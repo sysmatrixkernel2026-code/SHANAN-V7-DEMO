@@ -52,3 +52,28 @@ export function EmptyState({ title, description, icon, action }: EmptyStateProps
     </div>
   );
 }
+
+interface ErrorStateProps extends EmptyStateProps {
+  onRetry?: () => void;
+  retryLabel?: string;
+}
+
+export function ErrorState({ title, description, icon, action, onRetry, retryLabel }: ErrorStateProps) {
+  return (
+    <div className="empty-state empty-state-error">
+      {icon && <div className="empty-state-icon">{icon}</div>}
+      <h3 className="empty-state-title">{title}</h3>
+      {description && <p className="empty-state-desc">{description}</p>}
+      {(action || onRetry) && (
+        <div className="empty-state-action">
+          {action}
+          {onRetry && retryLabel && (
+            <button className="btn btn-outline" onClick={onRetry} type="button">
+              {retryLabel}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

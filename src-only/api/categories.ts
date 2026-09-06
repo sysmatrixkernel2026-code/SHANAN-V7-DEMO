@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     const rows = await sql`
       SELECT c.id, c.slug, c.name_en, c.name_ar, c.description_en, c.description_ar,
              c.parent_id, c.image_url, c.sort_order,
-             (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'active') AS product_count
+             (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'active' AND p.is_sample_data = 0) AS product_count
         FROM categories c
        WHERE c.is_active = 1
        ORDER BY c.sort_order ASC, c.name_en ASC`;

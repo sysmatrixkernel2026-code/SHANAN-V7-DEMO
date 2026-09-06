@@ -4,11 +4,18 @@ const url = process.env.SUPABASE_DB_URL;
 if (!url) throw new Error('SUPABASE_DB_URL is required');
 const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false });
 
+const AVAILABILITY_VALUES = new Set(['in_stock', 'limited', 'out_of_stock', 'on_request']);
+
+function toPositiveInt(value: string | null, fallback: number, max: number): number {
+  const n = value == null ? NaN : Number.parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(1, n));
+}
+
 export async function GET(req: Request) {
   try {
     const rUrl = new URL(req.url);
-    const page = Math.max(1, parseInt(rUrl.searchParams.get('page') || '1', 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(rUrl.searchParams.get('pageSize') || '24', 10)));
+    const pageSize = toPositiveInt(rUrl.searchParams.get('pageSize'), 24, 100);
     const search = rUrl.searchParams.get('search')?.trim() || '';
     const categoryId = rUrl.searchParams.get('categoryId');
     const brandId = rUrl.searchParams.get('brandId');
@@ -38,7 +45,7 @@ export async function GET(req: Request) {
         }
       }
     }
-    if (availability) {
+    if (availability && AVAILABILITY_VALUES.has(availability)) {
       params.push(availability);
       conditions.push(`p.availability = $${params.length}`);
     }
@@ -53,14 +60,13 @@ export async function GET(req: Request) {
       case 'newest': orderBy = 'p.created_at DESC'; break;
     }
 
-    const offset = (page - 1) * pageSize;
-
     const countResult = await sql.unsafe(
       `SELECT COUNT(*) as n FROM products p WHERE ${where}`,
       params,
     );
     const total = Number(countResult[0]?.n ?? 0);
-    const totalPages = Math.ceil(total / pageSize) || 1;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(toPositiveInt(rUrl.searchParams.get('page'), 1, totalPages), totalPages);
 
     const rows = await sql.unsafe(
       `SELECT p.id, p.sku, p.product_code, p.slug, p.name_en, p.name_ar,
@@ -74,7 +80,7 @@ export async function GET(req: Request) {
          LEFT JOIN brands b ON p.brand_id = b.id
         WHERE ${where}
         ORDER BY ${orderBy}
-        LIMIT ${pageSize} OFFSET ${offset}`,
+        LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
       params,
     );
 

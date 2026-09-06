@@ -242,4 +242,7 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  // Set when the request failed (network / non-2xx) — distinct from a
+  // legitimate empty result so callers can render an error state.
+  error?: boolean;
 }
