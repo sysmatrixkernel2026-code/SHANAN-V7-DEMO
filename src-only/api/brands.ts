@@ -1,0 +1,28 @@
+import { sql } from './postgres';
+
+export default async function handler(req: Request) {
+  if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'content-type': 'application/json' } });
+  try {
+    const rows = await sql`
+      SELECT b.id, b.slug, b.name, b.name_ar, b.logo_url,
+             (SELECT COUNT(*) FROM products p WHERE p.brand_id = b.id AND p.status = 'active' AND p.is_sample_data = 0) AS product_count
+        FROM brands b
+       WHERE b.is_active = 1
+       ORDER BY b.name ASC`;
+
+    const result = rows
+      .map((r: any) => ({
+        id: r.id, slug: r.slug,
+        name: r.name,
+        description: { en: r.name_ar || r.name, ar: r.name_ar || r.name },
+        logo: r.logo_url || null,
+        productCount: Number(r.product_count),
+      }))
+      .filter((b: any) => b.productCount > 0);
+
+    return new Response(JSON.stringify({ brands: result, count: result.length }), { status: 200, headers: { 'content-type': 'application/json' } });
+  } catch (err: any) {
+    console.error('[api/brands] failed:', err?.message);
+    return new Response(JSON.stringify({ error: 'Could not retrieve brands.' }), { status: 500, headers: { 'content-type': 'application/json' } });
+  }
+}
