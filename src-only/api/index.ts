@@ -1,0 +1,1 @@
+export default async function handler(req: Request) { return new Response(JSON.stringify({ ok: true, service: 'SHANAN API', runtime: process.version }), { status: 200, headers: { 'content-type': 'application/json' } }); }
