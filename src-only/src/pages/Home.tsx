@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useState, useEffect } from 'react';
-import { fetchCategoriesFromApi } from '../data/catalog';
+import { fetchCategoriesFromApi, fetchCatalogStats } from '../data/catalog';
 import type { Category } from '../types';
 import { SearchIcon, DocumentIcon, CartIcon, DatabaseIcon, ArrowIcon } from '../components/icons';
 import HeroShowcase from '../components/HeroShowcase';
@@ -9,17 +9,29 @@ import MarketTicker from '../components/MarketTicker';
 import PlatformApplications from '../components/PlatformApplications';
 import OfficialDeviceShowcase from '../components/OfficialDeviceShowcase';
 
+function formatCount(value: number): string {
+  return value > 0 ? value.toLocaleString('en-US') + '+' : '—';
+}
+
 export default function Home() {
   const { t, locale } = useLanguage();
-  const [mockCategories, setMockCategories] = useState<Category[]>([]);
-  useEffect(() => { fetchCategoriesFromApi().then(setMockCategories); }, []);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats] = useState<{ products: string; categories: string; brands: string }>({
+    products: '—',
+    categories: '—',
+    brands: '—',
+  });
 
-  const stats = [
-    { value: '13,000+', label: t('home.statsProducts'), sub: t('home.heroCapabilityLabel') },
-    { value: '8+', label: t('home.statsCategories'), sub: '' },
-    { value: '5+', label: t('home.statsBrands'), sub: '' },
-    { value: '—', label: t('home.statsRequests'), sub: '' },
-  ];
+  useEffect(() => {
+    fetchCategoriesFromApi().then(setCategories);
+    fetchCatalogStats().then(s =>
+      setStats({
+        products: formatCount(s.products),
+        categories: formatCount(s.categories),
+        brands: formatCount(s.brands),
+      }),
+    );
+  }, []);
 
   const features = [
     { icon: <SearchIcon />, title: t('home.feature1Title'), desc: t('home.feature1Desc') },
@@ -76,13 +88,23 @@ export default function Home() {
       <section className="home-stats">
         <div className="container">
           <div className="stats-grid">
-            {stats.map((stat, i) => (
-              <div key={i} className="stat-card">
-                <span className="stat-value">{stat.value}</span>
-                <span className="stat-label">{stat.label}</span>
-                {stat.sub && <span className="stat-sub">{stat.sub}</span>}
-              </div>
-            ))}
+            <div className="stat-card">
+              <span className="stat-value">{stats.products}</span>
+              <span className="stat-label">{t('home.statsProducts')}</span>
+              <span className="stat-sub">{t('home.heroCapabilityLabel')}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{stats.categories}</span>
+              <span className="stat-label">{t('home.statsCategories')}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{stats.brands}</span>
+              <span className="stat-label">{t('home.statsBrands')}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">—</span>
+              <span className="stat-label">{t('home.statsRequests')}</span>
+            </div>
           </div>
         </div>
       </section>
@@ -104,7 +126,7 @@ export default function Home() {
             <div className="home-intro-visual">
               <img src="https://images.pexels.com/photos/34207359/pexels-photo-34207359.jpeg?auto=compress&cs=tinysrgb&h=500&w=700" alt="Industrial automation" className="home-intro-img" />
               <div className="home-intro-stat">
-                <span className="home-intro-stat-value">13,000+</span>
+                <span className="home-intro-stat-value">{stats.products}</span>
                 <span className="home-intro-stat-label">{t('home.statsProducts')}</span>
               </div>
             </div>
@@ -185,7 +207,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="categories-preview-grid">
-            {mockCategories.slice(0, 8).map(cat => (
+            {categories.slice(0, 8).map(cat => (
               <Link key={cat.id} to={`/catalog?category=${cat.id}`} className="category-preview-card">
                 <div className="category-preview-icon">
                   <CategoryIcon />

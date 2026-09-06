@@ -1,9 +1,16 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { fetchProducts } from '../data/catalog';
+import type { Product } from '../types';
 
 /**
  * PlatformApplications — premium showcase of the SHANAN Mobile + Desktop experiences.
  * Two distinct compositions, both built on the existing SHANAN design system.
+ *
+ * The product rows inside the device mockups are populated with REAL products
+ * from the production catalog API (newest first). When the API is unreachable
+ * the showcase falls back to empty branded tiles — no mock product names/SKUs.
  *
  * Layout (desktop):
  *   Mobile section  → device LEFT  / content RIGHT
@@ -12,8 +19,117 @@ import { useLanguage } from '../i18n/LanguageContext';
  * Subtle "intelligent system" visual language: technical grid lines,
  * small structured data labels, monospace micro-labels.
  */
+
+type Availability = Product['availability'];
+
+interface MockupItem {
+  id?: string;
+  name?: string;
+  sku?: string;
+  image?: string | null;
+  slug?: string;
+  availability?: Availability;
+}
+
+const PHONE_SLUGS = ['bearings', 'electrical', 'tools'];
+const LAPTOP_SLUGS = ['fasteners', 'bearings', 'electrical', 'tools', 'fasteners', 'bearings'];
+
+function phoneThumbClass(slug?: string): string {
+  if (slug === 'bearings') return 'phone-app-product-img-bearings';
+  if (slug === 'electrical') return 'phone-app-product-img-electrical';
+  return 'phone-app-product-img-tools';
+}
+
+function laptopThumbClass(slug?: string): string {
+  if (slug === 'fasteners') return 'laptop-product-img-fasteners';
+  if (slug === 'bearings') return 'laptop-product-img-bearings';
+  if (slug === 'electrical') return 'laptop-product-img-electrical';
+  return 'laptop-product-img-tools';
+}
+
+function resolveImageUrl(raw?: string | null): string | null {
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + (raw.startsWith('/') ? raw : '/' + raw);
+}
+
 export default function PlatformApplications() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+
+  const [phoneItems, setPhoneItems] = useState<MockupItem[]>(() =>
+    PHONE_SLUGS.map(slug => ({ slug, image: null, name: undefined, sku: undefined, availability: undefined })),
+  );
+  const [laptopItems, setLaptopItems] = useState<MockupItem[]>(() =>
+    LAPTOP_SLUGS.map(slug => ({ slug, image: null, name: undefined, sku: undefined, availability: undefined })),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchProducts({ search: '', categoryId: null, brandId: null, availability: null, sortBy: 'newest', page: 1, pageSize: 9 })
+      .then(result => {
+        if (cancelled) return;
+        const products = result.items;
+        const toPhone = (i: number): MockupItem => {
+          const p = products[i];
+          if (!p) return { slug: PHONE_SLUGS[i], image: null, availability: undefined };
+          return {
+            id: p.id,
+            name: p.name[locale],
+            sku: p.sku,
+            slug: p.category?.slug ?? p.categoryId ?? PHONE_SLUGS[i],
+            image: resolveImageUrl(p.primaryImage || p.images?.[0]?.url),
+            availability: p.availability,
+          };
+        };
+        const toLaptop = (i: number): MockupItem => {
+          const p = products[i];
+          if (!p) return { slug: LAPTOP_SLUGS[i], image: null, availability: undefined };
+          return {
+            id: p.id,
+            name: p.name[locale],
+            sku: p.sku,
+            slug: p.category?.slug ?? p.categoryId ?? LAPTOP_SLUGS[i],
+            image: resolveImageUrl(p.primaryImage || p.images?.[0]?.url),
+            availability: p.availability,
+          };
+        };
+        setPhoneItems(PHONE_SLUGS.map((_, i) => toPhone(i)));
+        setLaptopItems(LAPTOP_SLUGS.map((_, i) => toLaptop(i)));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPhoneItems(PHONE_SLUGS.map(slug => ({ slug, image: null, availability: undefined })));
+        setLaptopItems(LAPTOP_SLUGS.map(slug => ({ slug, image: null, availability: undefined })));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  const availLabel = (av: Availability | undefined): string => {
+    switch (av) {
+      case 'in_stock':
+        return t('catalog.avail.in_stock');
+      case 'limited':
+        return t('catalog.avail.limited');
+      case 'out_of_stock':
+        return t('catalog.avail.out_of_stock');
+      case 'on_request':
+        return t('catalog.avail.on_request');
+      default:
+        return '';
+    }
+  };
+
+  const phoneBadgeClass = (av: Availability | undefined): string =>
+    av === 'limited' || av === 'out_of_stock' ? ' phone-app-product-badge-warn' : '';
+
+  const laptopBadgeClass = (av: Availability | undefined): string => {
+    if (av === 'limited' || av === 'out_of_stock') return ' laptop-product-badge-warn';
+    if (av === 'on_request') return ' laptop-product-badge-info';
+    return '';
+  };
 
   const mobileFeatures = [
     t('home.apps.mobileFeature1'),
@@ -87,35 +203,25 @@ export default function PlatformApplications() {
                     <span className="phone-app-cat">{t('home.apps.catFasteners')}</span>
                     <span className="phone-app-cat">{t('home.apps.catTools')}</span>
                   </div>
-                  {/* Product cards (vertical list) */}
+                  {/* Product cards (vertical list) — live catalog data */}
                   <div className="phone-app-list">
-                    <div className="phone-app-product">
-                      <div className="phone-app-product-img phone-app-product-img-bearings" />
-                      <div className="phone-app-product-meta">
-                        <span className="phone-app-product-name">{t('home.apps.product1Name')}</span>
-                        <span className="phone-app-product-sku">SHN-SKU-00001</span>
-                        <span className="phone-app-product-badge">{t('home.apps.badgeInStock')}</span>
+                    {phoneItems.map((item, i) => (
+                      <div className="phone-app-product" key={item.id ?? `phone-${i}`}>
+                        <div className={`phone-app-product-img ${phoneThumbClass(item.slug)}`}>
+                          {item.image && (
+                            <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                          )}
+                        </div>
+                        <div className="phone-app-product-meta">
+                          {item.name && <span className="phone-app-product-name">{item.name}</span>}
+                          {item.sku && <span className="phone-app-product-sku">{item.sku}</span>}
+                          {item.availability && (
+                            <span className={`phone-app-product-badge${phoneBadgeClass(item.availability)}`}>{availLabel(item.availability)}</span>
+                          )}
+                        </div>
+                        <span className="phone-app-product-add">+</span>
                       </div>
-                      <span className="phone-app-product-add">+</span>
-                    </div>
-                    <div className="phone-app-product">
-                      <div className="phone-app-product-img phone-app-product-img-electrical" />
-                      <div className="phone-app-product-meta">
-                        <span className="phone-app-product-name">{t('home.apps.product2Name')}</span>
-                        <span className="phone-app-product-sku">SHN-SKU-00002</span>
-                        <span className="phone-app-product-badge phone-app-product-badge-warn">{t('home.apps.badgeLimited')}</span>
-                      </div>
-                      <span className="phone-app-product-add">+</span>
-                    </div>
-                    <div className="phone-app-product">
-                      <div className="phone-app-product-img phone-app-product-img-tools" />
-                      <div className="phone-app-product-meta">
-                        <span className="phone-app-product-name">{t('home.apps.product3Name')}</span>
-                        <span className="phone-app-product-sku">SHN-SKU-00003</span>
-                        <span className="phone-app-product-badge">{t('home.apps.badgeInStock')}</span>
-                      </div>
-                      <span className="phone-app-product-add">+</span>
-                    </div>
+                    ))}
                   </div>
                   {/* Tab bar */}
                   <div className="phone-app-tabbar">
@@ -246,49 +352,27 @@ export default function PlatformApplications() {
                           <span className="laptop-sidebar-chip">Limited</span>
                         </div>
                       </aside>
-                      {/* Product grid */}
+                      {/* Product grid — live catalog data */}
                       <div className="laptop-app-catalog">
                         <div className="laptop-catalog-header">
-                          <span className="laptop-catalog-title">Fasteners</span>
-                          <span className="laptop-catalog-count">48 products</span>
+                          <span className="laptop-catalog-title">Latest</span>
+                          <span className="laptop-catalog-count">{laptopItems.filter(i => i.sku).length || '—'} products</span>
                         </div>
                         <div className="laptop-catalog-grid">
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-fasteners" />
-                            <span className="laptop-product-name">Hex Bolt M10</span>
-                            <span className="laptop-product-sku">SHN-SKU-00001</span>
-                            <span className="laptop-product-badge">In Stock</span>
-                          </div>
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-bearings" />
-                            <span className="laptop-product-name">Bearing 6204</span>
-                            <span className="laptop-product-sku">SHN-SKU-00002</span>
-                            <span className="laptop-product-badge laptop-product-badge-warn">Limited</span>
-                          </div>
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-electrical" />
-                            <span className="laptop-product-name">Contactor 25A</span>
-                            <span className="laptop-product-sku">SHN-SKU-00003</span>
-                            <span className="laptop-product-badge">In Stock</span>
-                          </div>
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-tools" />
-                            <span className="laptop-product-name">Coupling 8mm</span>
-                            <span className="laptop-product-sku">SHN-SKU-00004</span>
-                            <span className="laptop-product-badge">In Stock</span>
-                          </div>
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-fasteners" />
-                            <span className="laptop-product-name">Washer M10</span>
-                            <span className="laptop-product-sku">SHN-SKU-00005</span>
-                            <span className="laptop-product-badge laptop-product-badge-info">On Request</span>
-                          </div>
-                          <div className="laptop-product-card">
-                            <div className="laptop-product-img laptop-product-img-bearings" />
-                            <span className="laptop-product-name">Bearing 6308</span>
-                            <span className="laptop-product-sku">SHN-SKU-00006</span>
-                            <span className="laptop-product-badge">In Stock</span>
-                          </div>
+                          {laptopItems.map((item, i) => (
+                            <div className="laptop-product-card" key={item.id ?? `laptop-${i}`}>
+                              <div className={`laptop-product-img ${laptopThumbClass(item.slug)}`} style={{ position: 'relative', overflow: 'hidden' }}>
+                                {item.image && (
+                                  <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                                )}
+                                {item.availability && (
+                                  <span className={`laptop-product-badge${laptopBadgeClass(item.availability)}`}>{availLabel(item.availability)}</span>
+                                )}
+                              </div>
+                              {item.name && <span className="laptop-product-name">{item.name}</span>}
+                              {item.sku && <span className="laptop-product-sku">{item.sku}</span>}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>

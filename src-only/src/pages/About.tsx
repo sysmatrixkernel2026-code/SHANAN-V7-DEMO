@@ -1,13 +1,30 @@
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { fetchCatalogStats } from '../data/catalog';
 import { ShieldIcon, UsersIcon, LightbulbIcon, StarIcon, DatabaseIcon, CartIcon } from '../components/icons';
 
 export default function About() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
+  const [stats, setStats] = useState<{ products: string; categories: string; brands: string }>({
+    products: '—',
+    categories: '—',
+    brands: '—',
+  });
 
-  const stats = [
-    { value: '13,000+', label: t('home.statsProducts'), icon: <DatabaseIcon /> },
-    { value: '8+', label: t('home.statsCategories'), icon: <ShieldIcon /> },
-    { value: '5+', label: t('home.statsBrands'), icon: <StarIcon /> },
+  useEffect(() => {
+    fetchCatalogStats().then(s =>
+      setStats({
+        products: s.products > 0 ? s.products.toLocaleString('en-US') + '+' : '—',
+        categories: s.categories > 0 ? s.categories.toLocaleString('en-US') + '+' : '—',
+        brands: s.brands > 0 ? s.brands.toLocaleString('en-US') + '+' : '—',
+      }),
+    );
+  }, []);
+
+  const statCards = [
+    { value: stats.products, label: t('home.statsProducts'), icon: <DatabaseIcon /> },
+    { value: stats.categories, label: t('home.statsCategories'), icon: <ShieldIcon /> },
+    { value: stats.brands, label: t('home.statsBrands'), icon: <StarIcon /> },
     { value: '—', label: t('home.statsRequests'), icon: <CartIcon /> },
   ];
 
@@ -90,7 +107,7 @@ export default function About() {
             <p className="section-subtitle">{t('about.statsIntro')}</p>
           </div>
           <div className="stats-grid">
-            {stats.map((stat, i) => (
+            {statCards.map((stat, i) => (
               <div key={i} className="stat-card about-stat-card">
                 <div className="about-stat-icon">{stat.icon}</div>
                 <span className="stat-value">{stat.value}</span>

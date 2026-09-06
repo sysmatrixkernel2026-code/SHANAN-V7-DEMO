@@ -1,10 +1,11 @@
 ﻿// ============================================================
-// SHANAN Engineering Knowledge Platform â€” Catalog Data Access
-// Central data-access layer that fetches from the Bun API.
+// SHANAN Engineering Knowledge Platform — Catalog Data Access
+// Central data-access layer that fetches from the production API.
 //
 // This module replaces the old mockData.ts-based layer with
 // real API calls to /api/products, /api/categories, /api/brands.
-// The canonical product master lives in SQLite (via the API).
+// The canonical product master lives in Supabase (PostgreSQL) and
+// is served via the Vercel serverless functions in /api.
 // ============================================================
 
 import type { Product, Category, Brand, PaginatedResult, CatalogFilters } from '../types';
@@ -80,8 +81,37 @@ export async function fetchProductById(id: string): Promise<Product | null> {
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  // The API resolves by id, slug, or sku â€” so slug works directly
+  // The API resolves by id, slug, or sku — so slug works directly
   return fetchProductById(slug);
+}
+
+// ---- Live platform statistics ----
+// Derived from the verified production endpoints so the Home / About
+// stat bars always reflect the real catalog instead of marketing numbers.
+export interface CatalogStats {
+  products: number;
+  categories: number;
+  brands: number;
+}
+
+export async function fetchCatalogStats(): Promise<CatalogStats> {
+  const result: CatalogStats = { products: 0, categories: 0, brands: 0 };
+  try {
+    const [productsRes, categoriesRes, brandsRes] = await Promise.all([
+      fetch(`${API_URL}/api/products?page=1&pageSize=1&sortBy=name_asc`),
+      fetch(`${API_URL}/api/categories`),
+      fetch(`${API_URL}/api/brands`),
+    ]);
+    const productsData = await productsRes.json().catch(() => null);
+    const categoriesData = await categoriesRes.json().catch(() => null);
+    const brandsData = await brandsRes.json().catch(() => null);
+    result.products = productsData?.total ?? 0;
+    result.categories = Array.isArray(categoriesData?.categories) ? categoriesData.categories.length : 0;
+    result.brands = Array.isArray(brandsData?.brands) ? brandsData.brands.length : 0;
+  } catch {
+    // API unreachable — leave zeros; callers decide how to render.
+  }
+  return result;
 }
 
 // ---- Sync ID lookups (for backward compatibility) ----
@@ -123,7 +153,7 @@ export async function getBrandsWithCounts(): Promise<Brand[]> {
 }
 
 // ---- Legacy synchronous exports (for backward compat with old imports) ----
-// These are empty arrays â€” consumers should use the async fetch* functions.
+// These are empty arrays — consumers should use the async fetch* functions.
 export const categories: Category[] = [];
 export const brands: Brand[] = [];
 export const products: Product[] = [];

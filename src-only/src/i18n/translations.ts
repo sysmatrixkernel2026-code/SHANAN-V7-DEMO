@@ -72,11 +72,6 @@ export type TranslationKey =
   | 'home.apps.catAll'
   | 'home.apps.catFasteners'
   | 'home.apps.catTools'
-  | 'home.apps.product1Name'
-  | 'home.apps.product2Name'
-  | 'home.apps.product3Name'
-  | 'home.apps.badgeInStock'
-  | 'home.apps.badgeLimited'
   // Official Device Showcase (real mockup images)
   | 'home.showcaseOfficial.eyebrow'
   | 'home.showcaseOfficial.title'
@@ -1467,7 +1462,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.showcase.offerExpiry': { en: 'Limited-time promotional offer', ar: 'عرض ترويجي لفترة محدودة' },
   'home.showcase.announceBadge': { en: 'Announcement', ar: 'إعلان' },
   'home.showcase.announceTitle': { en: 'SHANAN Platform Update', ar: 'تحديث منصة SHANAN' },
-  'home.showcase.announceDesc': { en: 'Our catalog architecture now supports 13,000+ products with structured technical specifications. New categories and brands are being added continuously.', ar: 'تدعم بنية الكتالوج لدينا الآن أكثر من 13,000 منتج بمواصفات فنية منظمة. تتم إضافة فئات وعلامات تجارية جديدة باستمرار.' },
+  'home.showcase.announceDesc': { en: 'The SHANAN catalog is indexed live from the production database — thousands of products with structured technical specifications. New categories and brands are added continuously.', ar: 'كتالوج SHANAN مفهرس مباشرة من قاعدة بيانات الإنتاج — آلاف المنتجات بمواصفات فنية منظمة. تتم إضافة فئات وعلامات تجارية جديدة باستمرار.' },
   'home.showcase.eventBadge': { en: 'Event', ar: 'فعالية' },
   'home.showcase.eventTitle': { en: 'Industrial Exhibition & Trade Show', ar: 'معرض صناعي وعرض تجاري' },
   'home.showcase.eventDesc': { en: 'Meet the SHANAN team at upcoming industrial exhibitions. Discover new products, connect with suppliers, and explore procurement solutions.', ar: 'قابل فريق SHANAN في المعارض الصناعية القادمة. اكتشف منتجات جديدة وتواصل مع الموردين واستكشف حلول المشتريات.' },
@@ -1504,11 +1499,6 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.apps.catAll': { en: 'All', ar: 'الكل' },
   'home.apps.catFasteners': { en: 'Fasteners', ar: 'تثبيتات' },
   'home.apps.catTools': { en: 'Tools', ar: 'أدوات' },
-  'home.apps.product1Name': { en: 'Hex Bolt M10', ar: 'برغي سداسي M10' },
-  'home.apps.product2Name': { en: 'Contactor 25A', ar: 'كونتاكتور 25A' },
-  'home.apps.product3Name': { en: 'Bearing 6204', ar: 'محمل 6204' },
-  'home.apps.badgeInStock': { en: 'In Stock', ar: 'متوفر' },
-  'home.apps.badgeLimited': { en: 'Limited', ar: 'كمية محدودة' },
 
   // ---- Official Device Showcase (real mockup images) ----
   'home.showcaseOfficial.eyebrow': { en: 'One Platform · Two Workspaces', ar: 'منصة واحدة · بيئتا عمل' },
@@ -1544,7 +1534,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.feature3Title': { en: 'Supply Requests', ar: 'طلبات التوريد' },
   'home.feature3Desc': { en: 'Submit structured supply requests instead of direct checkout — tailored for B2B workflows.', ar: 'قدم طلبات توريد منظمة بدلاً من الشراء المباشر — مصممة لسير عمل الشركات.' },
   'home.feature4Title': { en: 'Scalable Catalog', ar: 'كتالوج قابل للتوسع' },
-  'home.feature4Desc': { en: 'Architecture prepared for a catalog of 13,000+ products with images and structured data.', ar: 'بنية تحتية مهيأة لكتالوج يضم أكثر من 13,000 منتج مع صور وبيانات منظمة.' },
+  'home.feature4Desc': { en: 'Live catalog with thousands of products, images, specifications, and structured technical documents.', ar: 'كتالوج مباشر يضم آلاف المنتجات مع الصور والمواصفات والوثائق الفنية المنظمة.' },
   'home.categoriesTitle': { en: 'Explore Categories', ar: 'استكشف الفئات' },
   'home.categoriesSubtitle': { en: 'Browse our industrial product categories.', ar: 'تصفح فئات منتجاتنا الصناعية.' },
   'home.categoriesCta': { en: 'View All Categories', ar: 'عرض كل الفئات' },

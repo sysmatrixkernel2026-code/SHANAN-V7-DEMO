@@ -22,7 +22,7 @@ const tickerItems: TickerItem[] = [
   { type: 'market', label: 'MARKET', labelAr: 'السوق', text: 'Aluminum Ingot — $2,180/Ton', textAr: 'الألمنيوم — 2,180$/طن', trend: 'neutral' },
   { type: 'job', label: 'JOB', labelAr: 'وظيفة', text: 'Field Sales Engineer — Irbid, Jordan', textAr: 'مهندس مبيعات ميداني — إربد، الأردن' },
   { type: 'event', label: 'EVENT', labelAr: 'فعالية', text: 'Jordan Build & Construct Expo — Dec 2026, Amman', textAr: 'معرض البناء والتشييد الأردني — ديسمبر 2026، عمّان' },
-  { type: 'shanan', label: 'SHANAN', labelAr: 'شانان', text: 'Catalog expanded — 13,000+ products now indexed', textAr: 'توسع الكتالوج — أكثر من 13,000 منتج مفهرس الآن' },
+  { type: 'shanan', label: 'SHANAN', labelAr: 'شانان', text: 'Live product catalog — structured specs and technical documents', textAr: 'كتالوج المنتجات المباشر — مواصفات منظمة ووثائق فنية' },
   { type: 'offer', label: 'OFFER', labelAr: 'عرض', text: 'Parker Hydraulic Valves — 10% off for registered buyers', textAr: 'صمامات باركر الهيدروليكية — خصم 10% للمشترين المسجلين' },
 ];
 
