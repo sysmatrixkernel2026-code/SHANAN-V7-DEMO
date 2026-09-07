@@ -2,7 +2,7 @@ import postgres from 'postgres';
 
 const url = process.env.SUPABASE_DB_URL;
 if (!url) throw new Error('SUPABASE_DB_URL is required');
-const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false });
+const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false, ssl: { ca: process.env.SUPABASE_SSL_CA, rejectUnauthorized: true } });
 
 const AVAILABILITY_VALUES = new Set(['in_stock', 'limited', 'out_of_stock', 'on_request']);
 

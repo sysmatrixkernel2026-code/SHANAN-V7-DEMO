@@ -458,7 +458,7 @@ function prodStore(): AuthStore {
   if (!prodStoreInstance) {
     const url = process.env.SUPABASE_DB_URL;
     if (!url) throw new Error('SUPABASE_DB_URL is required');
-    prodStoreInstance = createSqlStore(postgres(url, { max: 5, connect_timeout: 10, prepare: false }));
+    prodStoreInstance = createSqlStore(postgres(url, { max: 5, connect_timeout: 10, prepare: false, ssl: { ca: process.env.SUPABASE_SSL_CA, rejectUnauthorized: true } }));
   }
   return prodStoreInstance;
 }

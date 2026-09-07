@@ -3,7 +3,7 @@ import postgres from 'postgres';
 const url = process.env.SUPABASE_DB_URL;
 if (!url) throw new Error('SUPABASE_DB_URL is required');
 
-export const sql = postgres(url,{max:5,connect_timeout:10,prepare:false});
+export const sql = postgres(url,{max:5,connect_timeout:10,prepare:false,ssl:{ca:process.env.SUPABASE_SSL_CA,rejectUnauthorized:true}});
 
 export async function closePostgres(){
   await sql.end({timeout:5});
