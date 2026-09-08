@@ -292,20 +292,18 @@ export function createSqlStore(sql: any): AuthStore {
       return { attempts: Number(rows[0].attempts), firstAt: toIso(rows[0].first_attempt_at) };
     },
     async incrementAttempts(key, nowIso) {
-      const rows = await sql`SELECT attempts, first_attempt_at FROM login_attempts WHERE key = ${key} LIMIT 1`;
-      const existing = rows[0];
-      if (existing) {
-        const firstAt = toIso(existing.first_attempt_at);
-        if (Date.now() - Date.parse(firstAt) <= LOGIN_WINDOW_MS) {
-          await sql`UPDATE login_attempts SET attempts = attempts + 1, updated_at = ${nowIso} WHERE key = ${key}`;
-          return { attempts: Number(existing.attempts) + 1, firstAt };
-        }
-      }
-      await sql`
+      const firstIso = nowIso;
+      const windowStartIso = new Date(Date.parse(nowIso) - LOGIN_WINDOW_MS).toISOString();
+      const rows = await sql`
         INSERT INTO login_attempts (key, attempts, first_attempt_at, updated_at)
-        VALUES (${key}, 1, ${nowIso}, ${nowIso})
-        ON CONFLICT (key) DO UPDATE SET attempts = 1, first_attempt_at = ${nowIso}, updated_at = ${nowIso}`;
-      return { attempts: 1, firstAt: nowIso };
+        VALUES (${key}, 1, ${firstIso}, ${nowIso})
+        ON CONFLICT (key) DO UPDATE SET
+          attempts = CASE WHEN login_attempts.first_attempt_at >= ${windowStartIso} THEN login_attempts.attempts + 1 ELSE 1 END,
+          first_attempt_at = CASE WHEN login_attempts.first_attempt_at >= ${windowStartIso} THEN login_attempts.first_attempt_at ELSE ${firstIso} END,
+          updated_at = ${nowIso}
+        RETURNING attempts, first_attempt_at`;
+      const row = rows[0];
+      return { attempts: Number(row.attempts), firstAt: toIso(row.first_attempt_at) };
     },
     async resetAttempts(key) {
       await sql`DELETE FROM login_attempts WHERE key = ${key}`;
@@ -361,7 +359,7 @@ export async function handleLogin(req: Request, store: AuthStore): Promise<Respo
     await store.createSession(token, user.id, expiresAt);
     await store.insertActivity({
       id: crypto.randomUUID(),
-      eventType: 'SESSION_STARTED',
+      eventType: 'PLATFORM_SESSION_STARTED',
       userId: user.id,
       userType: user.user_type,
       companyId: user.company_id,

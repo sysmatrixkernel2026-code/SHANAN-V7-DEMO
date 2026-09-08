@@ -278,7 +278,7 @@ describe('POST /api/auth/login', () => {
     expect(body.user.password_hash).toBeUndefined();
     expect(JSON.stringify(body)).not.toContain('password_hash');
     expect(state.sessions.length).toBe(1);
-    expect(state.events.some((e) => e.eventType === 'SESSION_STARTED' && e.userId === 'u-admin')).toBe(true);
+    expect(state.events.some((e) => e.eventType === 'PLATFORM_SESSION_STARTED' && e.userId === 'u-admin')).toBe(true);
     expect(await state.store.getAttempts(key)).toBeNull();
   });
 
@@ -541,6 +541,119 @@ describe('RBAC + tenant isolation helpers', () => {
     expect(auth.supplierStatusGate('terminated')).toEqual({ ok: false, reason: 'inactive' });
     expect(auth.supplierStatusGate('pending')).toEqual({ ok: false, reason: 'pending' });
     expect(auth.supplierStatusGate('under_review')).toEqual({ ok: false, reason: 'pending' });
+  });
+});
+
+describe('G-B blocker regression coverage', () => {
+  test('successful login returns 200, creates a valid session, and records activity', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...admin });
+    const res = await auth.handleLogin(
+      new Request('http://x/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@shanan.example', password: PASS.admin }),
+      }),
+      fresh.store,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(typeof body.token).toBe('string');
+    expect(body.token).toMatch(/^[0-9a-f-]{36}-[0-9a-f-]{36}$/);
+    expect(fresh.sessions.length).toBe(1);
+    const session = fresh.sessions[0];
+    expect(session.userId).toBe('u-admin');
+    expect(Date.parse(session.expiresAt)).toBeGreaterThan(Date.now());
+    const loginEvent = fresh.events.find((e) => e.eventType === 'PLATFORM_SESSION_STARTED');
+    expect(loginEvent).toBeDefined();
+    expect(fresh.events.some((e) => e.eventType === 'SESSION_STARTED')).toBe(false);
+  });
+
+  test('activity event uses PLATFORM_SESSION_STARTED with preserved fields', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...custAdminA });
+    await auth.handleLogin(
+      new Request('http://x/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'ca@customer-a.example', password: PASS.customerA }),
+      }),
+      fresh.store,
+    );
+    const ev = fresh.events.find((e) => e.eventType === 'PLATFORM_SESSION_STARTED');
+    expect(ev).toBeDefined();
+    expect(ev.userId).toBe('u-ca');
+    expect(ev.userType).toBe('customer');
+    expect(ev.companyId).toBe('comp-A');
+    expect(ev.metadata).toBeNull();
+    expect(typeof ev.id).toBe('string');
+    expect(typeof ev.nowIso).toBe('string');
+  });
+
+  test('incrementAttempts performs a single atomic upsert (no read-then-write)', async () => {
+    let calls = 0;
+    const seen: string[] = [];
+    const mockSql = (fragments: TemplateStringsArray, ...values: unknown[]) => {
+      calls += 1;
+      seen.push(fragments.join('?') + ` [${values.length} params]`);
+      return Promise.resolve([{ attempts: 3, first_attempt_at: '2024-01-01T00:00:00.000Z' }]);
+    };
+    const store = auth.createSqlStore(mockSql as any);
+    const result = await store.incrementAttempts('k' + '1'.repeat(63), '2024-01-01T00:00:00.000Z');
+    expect(calls).toBe(1);
+    const sqlText = seen[0];
+    expect(sqlText).toContain('INSERT INTO login_attempts');
+    expect(sqlText).toContain('ON CONFLICT (key)');
+    expect(sqlText).toContain('RETURNING attempts, first_attempt_at');
+    expect(sqlText).toContain('?');
+    expect(seen[0]).toContain('[7 params]');
+    expect(sqlText.trim().startsWith('INSERT')).toBe(true);
+    expect(result).toEqual({ attempts: 3, firstAt: '2024-01-01T00:00:00.000Z' });
+  });
+
+  test('rate-limit window behavior: increments within window, resets after expiry', async () => {
+    const fresh = createMemState();
+    const key = await auth.rateLimitKey('10.0.0.1', 'win@example.com');
+    const t0 = new Date(Date.now() - auth.LOGIN_WINDOW_MS - 1000).toISOString();
+    fresh.attempts.set(key, { attempts: 7, firstAt: t0, updatedAt: t0 });
+    const r1 = await fresh.store.incrementAttempts(key, new Date().toISOString());
+    expect(r1.attempts).toBe(1);
+    expect(Date.parse(r1.firstAt)).toBeGreaterThan(Date.parse(t0));
+
+    const r2 = await fresh.store.incrementAttempts(key, new Date().toISOString());
+    expect(r2.attempts).toBe(2);
+    expect(r2.firstAt).toBe(r1.firstAt);
+
+    const r3 = await fresh.store.incrementAttempts(key, new Date().toISOString());
+    expect(r3.attempts).toBe(3);
+  });
+
+  test('successful login resets the rate-limit state', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...admin, id: 'u-reset', email: 'reset@example.com' });
+    const email = 'reset@example.com';
+    const key = await auth.rateLimitKey(null, email);
+    for (let i = 0; i < 3; i++) {
+      await auth.handleLogin(
+        new Request('http://x/api/auth/login', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, password: 'wrong-password-1' }),
+        }),
+        fresh.store,
+      );
+    }
+    expect((await fresh.store.getAttempts(key))?.attempts).toBe(3);
+    const res = await auth.handleLogin(
+      new Request('http://x/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password: PASS.admin }),
+      }),
+      fresh.store,
+    );
+    expect(res.status).toBe(200);
+    expect(await fresh.store.getAttempts(key)).toBeNull();
   });
 });
 
