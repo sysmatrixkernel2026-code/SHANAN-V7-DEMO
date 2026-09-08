@@ -241,7 +241,7 @@ function toFields(body: any): Record<string, unknown> {
 function json(data: unknown, status: number, extraHeaders?: Record<string, string>): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'content-type': 'application/json', ...extraHeaders },
+    headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...extraHeaders },
   });
 }
 
