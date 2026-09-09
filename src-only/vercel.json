@@ -13,6 +13,58 @@
   ],
   "rewrites": [
     {
+      "source": "/api/supply-requests/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/customers/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/users/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/credit-applications/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/suppliers/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/supplier/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/supplier-agreements/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/rfqs/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/purchase-requests/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/purchase-orders/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/storage/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/admin/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
+      "source": "/api/activity/(.*)",
+      "destination": "/api/[[...route]]"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
