@@ -21,7 +21,7 @@ import type { TranslationKey } from '../i18n/translations';
 // (requireInternal). The frontend only renders what the API returns.
 // ============================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // ---- API response shapes (match api/server.ts exactly) ----
 

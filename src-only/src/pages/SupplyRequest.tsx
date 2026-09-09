@@ -77,7 +77,7 @@ export default function SupplyRequest() {
     createdAt: string;
   } | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};

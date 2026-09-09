@@ -44,6 +44,23 @@ export interface AuthStore {
     passwordHash: string;
     nowIso: string;
   }): Promise<void>;
+  insertSupplierUser(opts: {
+    supplierId: string;
+    supplierRef: string;
+    nameEn: string;
+    nameAr: string | null;
+    country: string | null;
+    city: string | null;
+    address: string | null;
+    website: string | null;
+    contactName: string;
+    email: string;
+    contactPhone: string | null;
+    taxId: string | null;
+    userId: string;
+    passwordHash: string;
+    nowIso: string;
+  }): Promise<void>;
   getAttempts(key: string): Promise<{ attempts: number; firstAt: string } | null>;
   incrementAttempts(key: string, nowIso: string): Promise<{ attempts: number; firstAt: string }>;
   resetAttempts(key: string): Promise<void>;
@@ -123,6 +140,12 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 
 export function generateSessionToken(): string {
   return crypto.randomUUID() + '-' + crypto.randomUUID();
+}
+
+export function generateSupplierReference(): string {
+  const year = new Date().getFullYear();
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase().padStart(6, '0');
+  return `SUP-${year}-${random}`;
 }
 
 export function safeUserInfo(user: DBUser) {
@@ -286,6 +309,25 @@ export function createSqlStore(sql: any): AuthStore {
         INSERT INTO users (id, name, email, password_hash, user_type, role, company_id, supplier_id, is_active, created_at, updated_at)
         VALUES (${opts.id}, ${opts.name}, ${opts.email}, ${opts.passwordHash}, 'internal', 'admin', null, null, 1, ${opts.nowIso}, ${opts.nowIso})`;
     },
+    async insertSupplierUser(opts) {
+      await sql.begin(async (tx: any) => {
+        await tx`
+          INSERT INTO suppliers
+            (id, reference, name_en, name_ar, status, country, city, address, website,
+             contact_name, contact_email, contact_phone, tax_id, created_at, updated_at)
+          VALUES
+            (${opts.supplierId}, ${opts.supplierRef}, ${opts.nameEn}, ${opts.nameAr}, 'pending',
+             ${opts.country}, ${opts.city}, ${opts.address}, ${opts.website},
+             ${opts.contactName}, ${opts.email}, ${opts.contactPhone}, ${opts.taxId},
+             ${opts.nowIso}, ${opts.nowIso})`;
+        await tx`
+          INSERT INTO users
+            (id, name, email, password_hash, user_type, role, company_id, supplier_id, is_active, created_at, updated_at)
+          VALUES
+            (${opts.userId}, ${opts.contactName}, ${opts.email}, ${opts.passwordHash},
+             'supplier', 'supplier_admin', null, ${opts.supplierId}, 1, ${opts.nowIso}, ${opts.nowIso})`;
+      });
+    },
     async getAttempts(key) {
       const rows = await sql`SELECT attempts, first_attempt_at FROM login_attempts WHERE key = ${key} LIMIT 1`;
       if (!rows[0]) return null;
@@ -430,6 +472,75 @@ export async function handleRegisterAdmin(req: Request, store: AuthStore): Promi
   return json({ id, message: 'Admin account created' }, 201);
 }
 
+export async function handleRegisterSupplier(req: Request, store: AuthStore): Promise<Response> {
+  const nowIso = new Date().toISOString();
+  const parsed = await tryParseJson(req);
+  if (!parsed.ok) return json({ error: 'Invalid JSON body' }, 400);
+  const b = toFields(parsed.body);
+  const emailRaw = typeof b.email === 'string' ? b.email.trim().toLowerCase() : '';
+  const key = await rateLimitKey(clientIp(req), emailRaw);
+  const rl = await store.incrementAttempts(key, nowIso);
+  if (rl.attempts > LOGIN_MAX_REQUESTS) {
+    const retryAfter = Math.max(1, Math.ceil((Date.parse(rl.firstAt) + LOGIN_WINDOW_MS - Date.now()) / 1000));
+    return json({ error: 'Too many requests. Please try again later.' }, 429, { 'retry-after': String(retryAfter) });
+  }
+
+  if (typeof b.companyName !== 'string' || b.companyName.trim() === '') {
+    return json({ error: 'Company name is required' }, 422);
+  }
+  if (typeof b.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) {
+    return json({ error: 'Valid email is required' }, 422);
+  }
+  if (typeof b.password !== 'string' || b.password.length < 8) {
+    return json({ error: 'Password must be at least 8 characters' }, 422);
+  }
+  if (typeof b.contactName !== 'string' || b.contactName.trim() === '') {
+    return json({ error: 'Contact name is required' }, 422);
+  }
+  const email = b.email.trim().toLowerCase();
+
+  const dup = await store.findUserByEmail(email);
+  if (dup) return json({ error: 'Email already in use' }, 409);
+
+  try {
+    const supplierId = crypto.randomUUID();
+    const supplierRef = generateSupplierReference();
+    const userId = crypto.randomUUID();
+    const hash = await hashPassword(b.password);
+    await store.insertSupplierUser({
+      supplierId,
+      supplierRef,
+      nameEn: b.companyName.trim(),
+      nameAr: typeof b.companyNameAr === 'string' ? b.companyNameAr.trim() : null,
+      country: typeof b.country === 'string' ? b.country.trim() : null,
+      city: typeof b.city === 'string' ? b.city.trim() : null,
+      address: typeof b.address === 'string' ? b.address.trim() : null,
+      website: typeof b.website === 'string' ? b.website.trim() : null,
+      contactName: b.contactName.trim(),
+      email,
+      contactPhone: typeof b.contactPhone === 'string' ? b.contactPhone.trim() : null,
+      taxId: typeof b.taxId === 'string' ? b.taxId.trim() : null,
+      userId,
+      passwordHash: hash,
+      nowIso,
+    });
+    // H1: No session token is issued for a pending supplier. They can only log in
+    // once an internal user has approved/activated their account.
+    return json(
+      {
+        supplier: { id: supplierId, reference: supplierRef },
+        status: 'pending',
+        message: 'Supplier registration submitted for approval. You will be able to log in once your account is activated.',
+      },
+      201,
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[api/auth] supplier registration failed:', msg.slice(0, 200));
+    return json({ error: 'Registration failed' }, 500);
+  }
+}
+
 export async function route(req: Request, method: string, store: AuthStore): Promise<Response> {
   if (method !== 'GET' && method !== 'POST') {
     return new Response(null, { status: 405, headers: { allow: 'GET, POST' } });
@@ -443,6 +554,7 @@ export async function route(req: Request, method: string, store: AuthStore): Pro
   if (sub === 'login') return handleLogin(req, store);
   if (sub === 'logout') return handleLogout(req, store);
   if (sub === 'register-admin') return handleRegisterAdmin(req, store);
+  if (sub === 'register-supplier') return handleRegisterSupplier(req, store);
   return json({ error: 'Not found' }, 404);
 }
 

@@ -72,6 +72,7 @@ export async function GET(req: Request) {
       `SELECT p.id, p.sku, p.product_code, p.slug, p.name_en, p.name_ar,
               p.description_en, p.description_ar, p.category_id, p.brand_id,
               p.manufacturer, p.availability, p.is_sample_data, p.created_at,
+              p.sell_price, p.currency, p.stock_quantity,
               c.name_en AS category_name_en, c.name_ar AS category_name_ar,
               b.name AS brand_name,
               (SELECT pi.public_url FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = 1 LIMIT 1) AS primary_image_url
@@ -98,8 +99,9 @@ export async function GET(req: Request) {
       primaryImage: r.primary_image_url,
       categoryName: r.category_name_en ? { en: r.category_name_en, ar: r.category_name_ar || r.category_name_en } : null,
       brandName: r.brand_name || null,
-      sellPrice: null,
-      currency: 'JOD',
+      sellPrice: r.sell_price ?? null,
+      currency: r.currency || 'JOD',
+      stockQuantity: r.stock_quantity ?? null,
       createdAt: r.created_at,
     }));
 

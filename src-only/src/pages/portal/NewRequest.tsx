@@ -5,7 +5,7 @@ import { trackEvent, ActivityEvents } from '../../data/activity';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useSupplyRequest } from '../../context/SupplyRequestContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function NewRequest() {
   const { t } = useLanguage();

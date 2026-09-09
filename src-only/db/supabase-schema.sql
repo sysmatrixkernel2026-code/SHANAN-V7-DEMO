@@ -52,19 +52,23 @@ CREATE TABLE IF NOT EXISTS users (
   email           TEXT NOT NULL UNIQUE,
   password_hash   TEXT,
   user_type       TEXT NOT NULL DEFAULT 'customer'
-                  CHECK (user_type IN ('internal','customer')),
+                  CHECK (user_type IN ('internal','customer','supplier')),
   role            TEXT NOT NULL DEFAULT 'customer_user'
-                  CHECK (role IN ('admin','manager','employee','customer_admin','customer_user')),
+                  CHECK (role IN ('admin','manager','employee','customer_admin','customer_user','supplier_admin','supplier_user')),
   company_id      TEXT,
+  supplier_id     TEXT,
   is_active       INTEGER NOT NULL DEFAULT 1,
   created_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
   updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
   FOREIGN KEY (company_id) REFERENCES customer_companies(id) ON DELETE SET NULL,
   CHECK (
-    (user_type = 'internal' AND company_id IS NULL) OR
-    (user_type = 'customer' AND company_id IS NOT NULL)
+    (user_type = 'internal' AND company_id IS NULL AND supplier_id IS NULL) OR
+    (user_type = 'customer' AND company_id IS NOT NULL AND supplier_id IS NULL) OR
+    (user_type = 'supplier' AND supplier_id IS NOT NULL AND company_id IS NULL)
   )
 );
+-- The suppliers FK on users is added via ALTER TABLE after the suppliers table is
+-- created (circular reference: suppliers.created_by → users.id). See Phase A9 below.
 
 -- Indexes for users read paths
 CREATE INDEX IF NOT EXISTS idx_users_email
@@ -238,8 +242,11 @@ CREATE TABLE IF NOT EXISTS suppliers (
   name_en         TEXT NOT NULL,
   name_ar         TEXT,
   status          TEXT NOT NULL DEFAULT 'active'
-                  CHECK (status IN ('active','suspended','terminated')),
+                  CHECK (status IN ('pending','under_review','active','suspended','terminated')),
   country         TEXT,
+  city            TEXT,
+  address         TEXT,
+  website         TEXT,
   contact_name    TEXT,
   contact_email   TEXT,
   contact_phone   TEXT,
@@ -249,6 +256,12 @@ CREATE TABLE IF NOT EXISTS suppliers (
   created_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
   updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
+
+-- Circular FK enforcement after both tables exist:
+-- users.supplier_id → suppliers.id (added by migration 0002-era schema).
+ALTER TABLE users
+  ADD CONSTRAINT fk_users_supplier_id
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_suppliers_reference ON suppliers(reference);
 CREATE INDEX IF NOT EXISTS idx_suppliers_status     ON suppliers(status);
@@ -562,7 +575,10 @@ CREATE TABLE IF NOT EXISTS products (
   is_sample_data  INTEGER NOT NULL DEFAULT 0,    -- 1 = demo/sample, 0 = verified DOUBLE PRECISION product
   metadata_json   TEXT,                          -- flexible JSON for future extensions
   created_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
-  updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  sell_price      DOUBLE PRECISION,              -- retail sell price (JOD)
+  currency        TEXT,                          -- price currency (e.g. 'JOD')
+  stock_quantity  DOUBLE PRECISION               -- on-hand stock quantity
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_sku         ON products(sku);

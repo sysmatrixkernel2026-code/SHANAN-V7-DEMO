@@ -5,7 +5,7 @@ import { useLanguage } from '../../i18n/LanguageContext';
 import { LoadingState, EmptyState } from '../../components/LoadingEmptyStates';
 import { CheckIcon } from '../../components/icons';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const STATUS_LABELS: Record<string, { en: string; ar: string }> = {
   pending: { en: 'Pending', ar: 'قيد الانتظار' },

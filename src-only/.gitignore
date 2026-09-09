@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 
 # Build output
@@ -43,6 +43,7 @@ Thumbs.db
 
 # All local custom database files and backups
 db/custom.db*
+db/**/*.db*
 .vercel
 .env*
 

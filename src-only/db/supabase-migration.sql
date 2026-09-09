@@ -566,7 +566,10 @@ CREATE TABLE IF NOT EXISTS products (
   is_sample_data  INTEGER NOT NULL DEFAULT 0,    -- 1 = demo/sample, 0 = verified real product
   metadata_json   TEXT,                          -- flexible JSON for future extensions
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  sell_price      DOUBLE PRECISION,              -- retail sell price (JOD)
+  currency        TEXT,                          -- price currency (e.g. 'JOD')
+  stock_quantity  DOUBLE PRECISION               -- on-hand stock quantity
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_sku         ON products(sku);

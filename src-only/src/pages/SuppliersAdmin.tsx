@@ -16,7 +16,7 @@ const allProducts: any[] = []; // No longer imported from catalog
 // All data is INTERNAL CONFIDENTIAL — never exposed to customers.
 // ============================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface Supplier {
   id: string;

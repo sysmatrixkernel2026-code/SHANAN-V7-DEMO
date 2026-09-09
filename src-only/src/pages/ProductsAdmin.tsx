@@ -14,7 +14,7 @@ import Pagination from '../components/Pagination';
 // pagination, create/edit, and image upload.
 // ============================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface ProductListItem {
   id: string;

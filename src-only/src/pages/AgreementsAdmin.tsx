@@ -13,7 +13,7 @@ import { LoadingState, EmptyState } from '../components/LoadingEmptyStates';
 // (handled by AgreementDetail page).
 // ============================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface Agreement {
   id: string;

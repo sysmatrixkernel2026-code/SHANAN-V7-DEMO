@@ -7,7 +7,7 @@ const sql = postgres(url, { max: 5, connect_timeout: 10, prepare: false, ssl: { 
 export async function GET(req: Request) {
   try {
     const rows = await sql`
-      SELECT b.id, b.slug, b.name, b.name_ar, b.logo_url,
+      SELECT b.id, b.slug, b.name, b.name_ar, b.logo_url, b.description_en, b.description_ar,
              (SELECT COUNT(*) FROM products p WHERE p.brand_id = b.id AND p.status = 'active' AND p.is_sample_data = 0) AS product_count
         FROM brands b
        WHERE b.is_active = 1
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       .map((r: any) => ({
         id: r.id, slug: r.slug,
         name: r.name,
-        description: { en: r.name_ar || r.name, ar: r.name_ar || r.name },
+        description: { en: r.description_en || '', ar: r.description_ar || '' },
         logo: r.logo_url || null,
         productCount: Number(r.product_count),
       }))

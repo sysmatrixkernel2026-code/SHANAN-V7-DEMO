@@ -14,7 +14,7 @@ import type { TranslationKey } from '../i18n/translations';
 // Each task links back to its parent opportunity in /admin/opportunities.
 // ============================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // ---- V6 task types (mirrored from OpportunitiesAdmin.tsx) ----
 type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';

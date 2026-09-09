@@ -5,7 +5,7 @@ import { useLanguage } from '../../i18n/LanguageContext';
 import { LoadingState, EmptyState } from '../../components/LoadingEmptyStates';
 import { ClipboardIcon } from '../../components/icons';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface PortalRequest {
   id: string;
