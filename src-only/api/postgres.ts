@@ -10,7 +10,7 @@ export async function closePostgres(){
 }
 
 export async function getSessionUser(token:string){
-  const rows=await sql`SELECT u.* FROM user_sessions s JOIN users u ON u.id=s.user_id WHERE s.token=${token} AND s.expires_at > NOW() LIMIT 1`;
+  const rows=await sql`SELECT u.* FROM user_sessions s JOIN users u ON u.id=s.user_id WHERE s.token=${token} AND s.expires_at > ${new Date().toISOString()} LIMIT 1`;
   return (rows[0] as any) ?? null;
 }
 

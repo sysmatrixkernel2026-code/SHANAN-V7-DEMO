@@ -298,3 +298,37 @@ describe('A13-1: Auth helpers exist and are used', () => {
 } else {
   skipBanner('A13-1: Auth helpers exist and are used', 'legacy server source not present at ' + SERVER_PATH);
 }
+
+// ============================================================
+// TEST SUITE: Session expiry comparison type-safety (A13-4A)
+//
+// user_sessions.expires_at is a TEXT column (legacy contract).
+// Comparing it against the timestamptz literal NOW() raises
+// "operator does not exist: text > timestamp with time zone",
+// surfacing as an opaque 401 on every protected catch-all route
+// (getAuthenticatedUser swallows the error and returns null).
+// Production evidence confirmed the exact stack in /api/customers.
+// The protected routes MUST compare expires_at with a bound ISO
+// string ({new Date().toISOString()}), exactly like the auth route.
+// ============================================================
+
+const CATCHALL_API_PATH = fileURLToPath(new URL('../api/[[...route]].ts', import.meta.url));
+const POSTGRES_HELPER_PATH = fileURLToPath(new URL('../api/postgres.ts', import.meta.url));
+const authCodePath = existsSync(CATCHALL_API_PATH) ? CATCHALL_API_PATH : null;
+
+describe('A13-4A: expires_at TEXT column is never compared to NOW()', () => {
+  test('catch-all api/[[...route]].ts session lookup uses a bound ISO string', async () => {
+    const fs = await import('node:fs');
+    expect(authCodePath).toBeTruthy();
+    const code = fs.readFileSync(authCodePath!, 'utf-8');
+    expect(code).toContain('s.expires_at > ${new Date().toISOString()}');
+    expect(code).not.toContain('s.expires_at > NOW()');
+  });
+
+  test('api/postgres.ts session lookup uses a bound ISO string', async () => {
+    const fs = await import('node:fs');
+    const code = fs.readFileSync(POSTGRES_HELPER_PATH, 'utf-8');
+    expect(code).toContain('s.expires_at > ${new Date().toISOString()}');
+    expect(code).not.toContain('s.expires_at > NOW()');
+  });
+});

@@ -154,7 +154,7 @@ async function getAuthenticatedUser(req: Request): Promise<any | null> {
       SELECT u.id, u.name, u.email, u.user_type, u.role, u.company_id, u.supplier_id, u.is_active
       FROM user_sessions s
       JOIN users u ON u.id = s.user_id
-      WHERE s.token = ${token} AND s.expires_at > NOW()
+      WHERE s.token = ${token} AND s.expires_at > ${new Date().toISOString()}
       LIMIT 1`;
     if (!rows[0]) {
       await sql()`DELETE FROM user_sessions WHERE token = ${token}`;
