@@ -1,266 +1,203 @@
-# SHANAN Platform — Production Deployment Guide
+# SHANAN Platform — Deployment Guide (Current Architecture)
+
+> Status: **Current** (rewritten in P0-00B, 2026-09-11).
+> This document reflects the LIVE production architecture: a Vite/React
+> frontend served by **Vercel**, an API implemented as **Vercel serverless
+> functions** (`api/*.ts`), and a **Supabase PostgreSQL 16** production
+> database. The older Bun/SQLite/port-3001 deployment is retained ONLY as
+> a legacy reference — see [Legacy local server](#legacy-local-server).
 
 ## Architecture Overview
 
 ```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│   Frontend        │     │   API Server     │     │   Database        │
-│   React + Vite   │────▶│   Bun + SQLite    │────▶│   SQLite / PG    │
-│   (static build) │     │   (port 3001)     │     │                   │
-└──────────────────┘     └──────────────────┘     └──────────────────┘
-                                  │
-                                  ▼
-                         ┌──────────────────┐
-                         │   Object Storage   │
-                         │   (local / S3)     │
-                         │   Product images   │
-                         └──────────────────┘
+┌──────────────────────┐     ┌───────────────────────────┐
+│   Vercel edge/CDN     │     │   Supabase PostgreSQL 16   │
+│                      │     │   (production database)     │
+│   Frontend           │     │                             │
+│   Vite/React build   │     │   public schema              │
+│   (dist published)   │     │   + db/migrations/* applied   │
+│                      │     │                             │
+│   /api/* serverless  │───▶ │   users, user_sessions,      │
+│   api/[[...route]].ts│     │   login_attempts, suppliers, │
+│   api/auth/...       │     │   rfqs/offers, products,     │
+│   api/products.ts... │     │   purchase_*, activity, …    │
+└──────────────────────┘     └─────────────────────────────┘
+          │
+          ▼
+   Object storage (local /tmp or S3 via STORAGE_PROVIDER)
 ```
+
+**Key facts verified in P0-00A/P0-00B:**
+
+- Production runtime is **Vercel + Supabase PostgreSQL**.
+- The business API is the monolithic serverless catch-all
+  `api/[[...route]].ts` (all `/api/<resource>/*` routes via the rewrites
+  in `vercel.json`).
+- Authentication uses **opaque bearer sessions** over
+  `users` / `user_sessions`, PBKDF2-SHA256 (100k iterations) password
+  hashing, and DB-backed login rate limiting (`login_attempts`).
+- The frontend calls the same origin; `VITE_API_URL` is build-time-inlined.
+
+## Environments
+
+| Layer | LOCAL | PREVIEW (Vercel) | PRODUCTION (Vercel) |
+|---|---|---|---|
+| Frontend | `bun run dev` (vite, port 3000) | Vercel Preview deployment | Vercel Production deployment |
+| API | vite dev proxy or a local Bun instance of `api/*` (see note) | Vercel serverless functions (`/api/*`) | Vercel serverless functions (`/api/*`) |
+| Database | Supabase project (or local) via `SUPABASE_DB_URL` | Branch/preview Supabase or shared | Supabase PostgreSQL (primary) |
+| Auth | Same code path (serverless or local) | Same code path | Same code path |
+
+> **Local server note:** the only self-hostable Bun server left is
+> `legacy/api/server.ts` (port 3001) which runs against a **SQLite** file
+> from `db/schema.sql`. It is a deprecated contract keeper and is NOT how
+> production runs. For local development the frontend's `VITE_API_URL`
+> normally points at a deployed/secondary preview API or a local port.
 
 ## Prerequisites
 
-- **Bun** >= 1.0 (runtime for the API server)
-  - Install: https://bun.sh/docs/installation
-- **Node.js** >= 18 (for building the frontend)
-  - Install: https://nodejs.org/
+- **Node.js** >= 18 (frontend toolchain) and/or **Bun** >= 1.0
+  (test runner, scripts; `bunx`/`npm` both work).
+- A **Supabase project** (hosted at supabase.com) for the database.
+- A **Vercel account/project** for hosting.
+- Credentials (Supabase connection string, API keys, Vercel access) are
+  supplied through the hosting panels — they must never be committed.
 
-## Development Setup
+## Project Layout (source root `src-only/`)
 
-1. **Clone/extract the project:**
-   ```
-   project/
-   ├── api/
-   ├── src/
-   ├── db/
-   │   └── schema.sql
-   ├── package.json
-   └── .env
-   ```
+```
+src-only/
+├── api/                      # Vercel serverless functions (TypeScript)
+│   ├── [[...route]].ts       #   main business catch-all (~6.5k lines)
+│   ├── auth/[[...route]].ts  #   auth API (login/me/logout/register)
+│   ├── postgres.ts           #   shared lazy postgres client + helpers
+│   ├── products.ts           #   catalog endpoints (concrete functions)
+│   ├── categories.ts / brands.ts / health.ts / index.ts
+│   └── products/[id].ts
+├── src/                      # Vite/React frontend
+├── db/                       # Schemas + migrations (documentation source)
+│   ├── schema.sql            #   LEGACY SQLite schema
+│   ├── supabase-schema.sql   #   canonical PostgreSQL schema (authoritative)
+│   ├── supabase-migration.sql#   LEGACY (SQLite) — see header; NOT Pg
+│   └── migrations/           #   incremental Supabase migrations
+│       ├── 0001_supabase_login_attempts.sql
+│       ├── 0002_suppliers_registration_address.sql
+│       ├── 0003_user_sessions.sql
+│       └── 20260909193832_revoke_public_rls_auto_enable_execute.sql
+├── tests/                    # bun test suites (auth-auth, a13-regression)
+├── supabase/                 # local Supabase tooling artifacts (.temp excluded)
+├── vercel.json               # rewrites + security headers
+├── .env.example              # documented variable names (placeholders only)
+├── .vercelignore             # excludes db/, storage/, env files from build
+└── package.json              # scripts (dev/build/lint/test)
+```
 
-2. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env if needed
-   ```
+> `db/` is excluded from the deploy bundle (`.vercelignore`); the running
+> database never ships with the function. The schemas exist for
+> reproducibility/documentation and must be kept in sync with migrations.
 
-3. **Install dependencies:**
-   ```bash
-   bun install
-   ```
-
-4. **Start the API server (Terminal 1):**
-   ```bash
-   bun run api/server.ts
-   ```
-   - Runs on port 3001
-   - Auto-seeds demo product data on first start
-   - Health check: http://localhost:3001/api/health
-
-5. **Start the frontend dev server (Terminal 2):**
-   ```bash
-   bun run dev
-   ```
-   - Runs on port 3000
-   - Open http://localhost:3000
-
-## Production Deployment
-
-### 1. Build the Frontend
+## Commands
 
 ```bash
-cd project
-bun run build
+# Install
+bun install
+
+# Test (unit suites — no live DB required)
+bun test
+
+# Lint (frontend source only currently; api/** intentionally out of the
+# ESLint scope — see P0-00B report §8 for the classified blind spot)
+bunx eslint src/
+
+# Type-check (frontend src only, project references)
+bun tsc -b
+
+# Production build (type-check + Vite build → dist/)
+bun run build        # == tsc -b && vite build
+
+# Local dev server (frontend)
+bun run dev
 ```
 
-This produces a `dist/` folder with static HTML/CSS/JS files.
-Deploy these to any static file server (nginx, Cloudflare Pages, S3+CloudFront, Vercel, etc.).
+## Environment Variables
 
-Set `VITE_API_URL` in your `.env` before building:
-```bash
-VITE_API_URL=https://api.your-domain.com bun run build
-```
+All variable names below are read by the API; current authoritative list
+from the code, verified at runtime:
 
-### 2. Deploy the API Server
+| Variable | Used by | Required in prod | Notes |
+|---|---|---|---|
+| `SUPABASE_DB_URL` | `api/postgres.ts`, `api/[[...route]].ts`, `api/auth/[[...route]].ts` | **Yes** | Supabase connection string (PK-pooled/direct). Server throws if absent. |
+| `SUPABASE_SSL_CA` | same | Yes if used (self-hosted CA) | PEM certificate for TLS to Supabase. |
+| `SESSION_DURATION_MS` | auth | no | default 86400000 (24 h). |
+| `LOGIN_MAX_REQUESTS` | auth | no | default 20. |
+| `LOGIN_WINDOW_MS` | auth | no | default 900000 (15 min). |
+| `STORAGE_PROVIDER` | main API | no | `local` (default) or `s3`. |
+| `STORAGE_BASE_PATH` | main API | no | local storage base; default `/tmp/shanan-storage`. |
+| `STORAGE_PUBLIC_URL` | main API | no | public URL prefix for stored objects. |
+| `S3_*` (ENDPOINT/REGION/BUCKET/KEYS/FORCE_PATH_STYLE) | main API | only when `STORAGE_PROVIDER=s3` | S3-compatible object storage. |
+| `MAX_IMAGE_SIZE_MB` | main API | no | upload guard. |
+| `ANALYSIS_WINDOW_DAYS` | main API | no | analytics window (default 30). |
+| `VITE_API_URL` | frontend (build-time) | yes (build) | inlined into the bundle. |
+| `EXTRA_CORS_ORIGINS` | legacy server only | no | not used by Vercel functions. |
+| `DATABASE_URL`, `PORT` | legacy server only | no | SQLite path / 3001 — legacy only. |
 
-```bash
-# On the production server:
-cd /opt/shanan
-bun install --production
-bun run api/server.ts
-```
+> Set these in the **Vercel project environment** (per environment: Local/
+> Preview/Production). Do **not** commit real values; `.env.example`
+> contains safe placeholders (see `.env.example`).
 
-Use a process manager (PM2, systemd, Docker) to keep the server running:
+## Authentication Architecture (verified contract)
 
-```bash
-# Using PM2
-pm2 start "bun run api/server.ts" --name shanan-api
+- Opaque 256-bit-ish bearer tokens in `user_sessions` (`token` PK,
+  `user_id` FK → `users`, `expires_at` TEXT, `created_at` TEXT).
+- PBKDF2-SHA256, 100,000 iterations, 16-byte salt; password hashes stored
+  as `pbkdf2$<iters>$<b64(salt+hash)>`.
+- Endpoints: `POST /api/auth/login`, `POST /api/auth/logout`,
+  `GET /api/auth/me`, `POST /api/auth/register-admin`,
+  `POST /api/auth/register-supplier`.
+- Session expiry compared **as text** on the TEXT `expires_at` column
+  (ISO-8601) — see commit `ed7c541`.
+- Login rate limiting via `public.login_attempts`
+  (`0001_supabase_login_attempts.sql`), single atomic upsert, window reset
+  on success.
+- Generic 401s, inactive-user 403s, DP-safe tenant-obfuscated 404s.
+- RBAC tenant helpers in `api/[[...route]].ts` (`requireInternal`,
+  `requireSupplier`, `requireSupplierAnyStatus`, etc.).
 
-# Using systemd (see systemd unit file below)
-```
+## Database & Migration Workflow
 
-### 3. Configure Storage
+1. **Authoritative schema:** `db/supabase-schema.sql` (PostgreSQL).
+2. **Changes are delivered as migration files** under `db/migrations/`
+   (`NUMBER_description.sql`), each single-purpose and idempotent.
+3. Migrations are applied to the Supabase project manually/through the
+   project's own migration tooling (Supabase local / SQL editor) — the
+   repo does not auto-run them and `db/` is not deployed to the function.
+4. Never edit `supabase-schema.sql` in a way that diverges from applied
+   migrations; a new migration is the replayable record of a change.
+5. `db/schema.sql` and `db/supabase-migration.sql` are the **legacy SQLite**
+   schema and must not be applied to Supabase.
 
-**Local storage (default):**
-- Files stored in `./storage/` (or `STORAGE_BASE_PATH`)
-- Served via `/api/storage/:key` endpoint
+## Production Deployment Model
 
-**S3-compatible storage (production):**
-```env
-STORAGE_PROVIDER=s3
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_REGION=us-east-1
-S3_BUCKET=your-shanan-bucket
-S3_ACCESS_KEY=...
-S3_SECRET_KEY=...
-S3_FORCE_PATH_STYLE=false
-STORAGE_PUBLIC_URL=https://cdn.your-domain.com
-```
-
-### 4. Configure CORS
-
-Set `EXTRA_CORS_ORIGINS` in `.env`:
-```env
-EXTRA_CORS_ORIGINS=https://your-domain.com,https://www.your-domain.com
-```
-
-### 5. Database
-
-**SQLite (default — works for small to medium deployments):**
-- Database file at `DATABASE_URL` path
-- Auto-created from `db/schema.sql` on first start
-- WAL mode enabled for concurrent reads
-- Backup: copy the `.db` file when server is stopped
-
-**PostgreSQL (for large-scale production — future):**
-- The schema uses SQLite-compatible SQL that can be adapted to PostgreSQL
-- Contact the team for PostgreSQL migration support
-
-## Bulk Data Import
-
-### Import Products (JSON manifest)
-
-```bash
-# Create a JSON manifest file:
-cat > products.json << 'EOF'
-{
-  "items": [
-    {
-      "sku": "SHN-SKU-00001",
-      "productCode": "SHN-PC-00001",
-      "nameEn": "Deep Groove Ball Bearing 6201",
-      "nameAr": "محمل كروي عميق 6201",
-      "categoryId": "cat-002",
-      "brandId": "brand-skf",
-      "availability": "in_stock",
-      "manufacturer": "SKF"
-    }
-  ]
-}
-EOF
-
-# Import via API (requires internal auth token):
-curl -X POST http://localhost:3001/api/admin/import/products \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d @products.json
-```
-
-### Import Images (JSON manifest — for 16,000+ images)
-
-```json
-{
-  "items": [
-    {
-      "productId": "SHN-SKU-00001",
-      "storageKey": "products/prod-00001/001.jpg",
-      "publicUrl": "https://cdn.your-domain.com/products/prod-00001/001.jpg",
-      "filename": "001.jpg",
-      "mimeType": "image/jpeg",
-      "fileSize": 245678,
-      "width": 800,
-      "height": 600,
-      "isPrimary": true,
-      "sortOrder": 0,
-      "altEn": "Front view",
-      "altAr": "عرض أمامي"
-    }
-  ]
-}
-```
-
-Import:
-```bash
-curl -X POST http://localhost:3001/api/admin/import/images \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d @images.json
-```
-
-### Import Response Format
-
-```json
-{
-  "jobId": "uuid",
-  "status": "completed",
-  "total": 1000,
-  "created": 950,
-  "updated": 0,
-  "skipped": 30,
-  "failed": 20,
-  "errors": ["Row 5: product not found", "Row 12: missing required field"]
-}
-```
+1. Push to the branch; **Vercel builds**: `bun install`, `tsc -b`,
+   `vite build` (via `build` script; `api/*.ts` functions are bundled by
+   Vercel automatically). `vercel.json` supplies security headers and
+   rewrites `/api/<prefix>/*` → `/api/[[...route]]`.
+2. **Preview** deploy for feature branches; **Production** deploy for
+   `main`/release branch.
+3. Database changes ship separately as **Supabase migrations** (see above)
+   and must be applied before/with the code that relies on them.
+4. Storage: if persistent artifacts are needed, set `STORAGE_PROVIDER=s3`
+   in the Vercel env (local `/tmp` is ephemeral across cold starts).
 
 ## Health Check
 
-```bash
-curl http://localhost:3001/api/health
-```
+- `GET /api/health` → `{ ok: true, ... }` (serverless endpoint;
+  `api/health.ts`).
 
-Response:
-```json
-{
-  "ok": true,
-  "service": "shanan-supply-api",
-  "version": "1.0.0",
-  "storage": {
-    "provider": "local",
-    "basePath": "./storage",
-    "publicUrl": null,
-    "s3Configured": false
-  },
-  "database": "/path/to/custom.db"
-}
-```
+## Legacy Local Server (deprecated — reference only)
 
-## Systemd Service File (Linux)
-
-```ini
-[Unit]
-Description=SHANAN API Server
-After=network.target
-
-[Service]
-Type=simple
-User=shanan
-WorkingDirectory=/opt/shanan
-EnvironmentFile=/opt/shanan/.env
-ExecStart=/usr/bin/bun run api/server.ts
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-## Docker (optional)
-
-```dockerfile
-FROM oven/bun:1
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --production
-COPY . .
-EXPOSE 3001
-CMD ["bun", "run", "api/server.ts"]
-```
+The old self-hosted deployment (`Bun + SQLite`, port **3001**,
+`bun run api/server.ts`, PM2/systemd/Docker) is **not** used by the live
+system. Files and procedures for it live under `legacy/` and are kept as
+contract provenance and offline tooling. If anything in production
+deployment expects SQLite/`DATABASE_URL`/`PORT=3001`, remove that
+assumption — production is Supabase + Vercel.

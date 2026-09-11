@@ -1,4 +1,16 @@
 -- ============================================================
+-- IMPORTANT — DATABASE IDIOM NOTICE (P0-00B)
+-- This file is the LEGACY SQLITE schema (SQLite dialect:
+-- PRAGMA foreign_keys, datetime('now'), AUTOINCREMENT, REAL).
+-- It is byte-identical to db/schema.sql and predates the
+-- Supabase PostgreSQL migration. Despite the filename, this is
+-- NOT the Supabase PostgreSQL production schema and must NOT be
+-- applied to the Supabase database.
+-- The authoritative PostgreSQL production schema is:
+--   db/supabase-schema.sql  (plus db/migrations/* applied in order)
+-- ============================================================
+
+-- ============================================================
 -- SHANAN Engineering Knowledge Platform — SQLite Schema
 -- Local persistence layer for the Supply Request workflow
 -- and Customer Company foundation.
