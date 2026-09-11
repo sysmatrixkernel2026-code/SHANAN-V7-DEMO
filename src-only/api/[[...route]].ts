@@ -396,7 +396,7 @@ async function s3SignRequest(method: string, key: string, body: Uint8Array | nul
   const stringToSign = `AWS4-HMAC-SHA256\n${nowIso}\n${credentialScope}\n${createHash('sha256').update(canonicalRequest).digest('hex')}`;
 
   const hmac = async (keyData: Buffer, data: string): Promise<Buffer> => {
-    const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const cryptoKey = await crypto.subtle.importKey('raw', new Uint8Array(keyData), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     return Buffer.from(await crypto.subtle.sign('HMAC', cryptoKey, Buffer.from(data, 'utf8')));
   };
   const kDate = await hmac(Buffer.from(`AWS4${secretKey}`, 'utf8'), dateStamp);
@@ -1299,7 +1299,7 @@ async function evaluateSourcingForRequest(supplyRequestId: string): Promise<Sour
         offer_status: null,
         eligibility,
         flags,
-        data_completeness,
+        data_completeness: dataCompleteness,
         recommendation: 'requires_review',
       });
     }
@@ -1409,7 +1409,7 @@ async function evaluateSourcingForRequest(supplyRequestId: string): Promise<Sour
         offer_status: o.offer_status,
         eligibility,
         flags,
-        data_completeness,
+        data_completeness: dataCompleteness,
         recommendation: 'requires_review',
       });
     }
@@ -1713,7 +1713,7 @@ async function insertSupplyRequest(data: ValidationOk['data']): Promise<{ id: st
   const id = generateId();
   const reference = generateReference();
   const createdAt = new Date().toISOString();
-  await sql.begin(async (tx: any) => {
+  await sql().begin(async (tx: any) => {
     await tx`
       INSERT INTO supply_requests
         (id, reference, requester_name, company_name, email, phone, country, city, message,

@@ -13,7 +13,7 @@
 
 import { Database } from 'bun:sqlite';
 import { describe, test, expect } from 'bun:test';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // This is a legacy round-trip regression suite. Its live-HTTP suites assert
@@ -330,5 +330,57 @@ describe('A13-4A: expires_at TEXT column is never compared to NOW()', () => {
     const code = fs.readFileSync(POSTGRES_HELPER_PATH, 'utf-8');
     expect(code).toContain('s.expires_at > ${new Date().toISOString()}');
     expect(code).not.toContain('s.expires_at > NOW()');
+  });
+});
+
+// ============================================================
+// TEST SUITE: P0-00C — latent production defect remediation
+//
+// The catch-all api/[[...route]].ts defines the SQL client as a
+// lazy FACTORY: `function sql(): any { ... return _sql; }`.
+// The postgres `begin(...)` transaction helper lives on the
+// client instance, so the only valid form is `sql().begin(...)`
+// (the pattern used by every other transaction site in the file).
+// These source-level regressions mirror the A13-4A approach used
+// for the expires_at fix: they read the file and assert the exact
+// corrected constructs are present and the defective constructs
+// are absent. They run without a live database (serverless-safe).
+// ============================================================
+
+describe('P0-00C: latent production defects remediated in the catch-all API', () => {
+  if (!existsSync(CATCHALL_API_PATH)) {
+    skipBanner('P0-00C regressions', 'catch-all api/[[...route]].ts not present');
+    return;
+  }
+  const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+
+  test('C1: insertSupplyRequest uses sql().begin(...) factory invocation (no bare sql.begin)', () => {
+    // Every transaction in the catch-all must invoke begin() on the
+    // lazily-created client: sql().begin(...). The function binding
+    // sql.begin(...) would throw "sql.begin is not a function".
+    expect(code).toContain('await sql().begin(async (tx: any) => {');
+    expect(code).not.toContain('await sql.begin(');
+    // Guard: the factory-invocation form must remain the only way begin is reached.
+    const factoryBeginMatches = code.match(/sql\(\)\.begin\(/g) ?? [];
+    expect(factoryBeginMatches.length).toBe(5);
+  });
+
+  test('C2: data_completeness is emitted with the declared camelCase local (no bare shorthand)', () => {
+    // evaluateSourcingForRequest declares `dataCompleteness` (camelCase,
+    // lines ~1202/1328) and the SourcingOption contract field is
+    // `data_completeness` (snake_case, per SourcingEvaluation.tsx). The
+    // shorthand `data_completeness,` previously threw ReferenceError.
+    const occurrences = code.match(/data_completeness: dataCompleteness,/g) ?? [];
+    expect(occurrences.length).toBe(2);
+    expect(code).not.toContain('data_completeness,');
+  });
+
+  test('C3: importKey receives a fresh Uint8Array view (no bare Buffer argument)', () => {
+    // crypto.subtle.importKey('raw', ...) requires a BufferSource with a
+    // concrete ArrayBuffer backing. `new Uint8Array(keyData)` copies the
+    // (small) HMAC key into such a view; the previous bare Buffer
+    // <ArrayBufferLike> argument failed the strict type contract.
+    expect(code).toContain("importKey('raw', new Uint8Array(keyData)");
+    expect(code).not.toContain("importKey('raw', keyData,");
   });
 });
