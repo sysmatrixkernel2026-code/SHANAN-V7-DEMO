@@ -2753,16 +2753,14 @@ async function route(req: Request, method: string): Promise<Response> {
     if (b.action === 'approve') {
       if (currentStatus !== 'under_review') return errorResponse(`Cannot approve: current status is '${currentStatus}' (must be 'under_review')`, 400, origin);
       const notes = typeof b.approvalNotes === 'string' ? b.approvalNotes : null;
-      const reviewer = typeof b.reviewedBy === 'string' ? b.reviewedBy : null;
-      await sql()`UPDATE credit_applications SET status = 'approved', approval_notes = ${notes}, reviewed_at = ${now}, reviewed_by = ${reviewer}, updated_at = ${now} WHERE id = ${existing.id}`;
+      await sql()`UPDATE credit_applications SET status = 'approved', approval_notes = ${notes}, reviewed_at = ${now}, reviewed_by = ${auth.user.id}, updated_at = ${now} WHERE id = ${existing.id}`;
       const updatedRows = await sql()`SELECT * FROM credit_applications WHERE id = ${existing.id} LIMIT 1`;
       return jsonResponse({ application: updatedRows[0] }, 200, origin);
     }
     if (b.action === 'reject') {
       if (currentStatus !== 'under_review') return errorResponse(`Cannot reject: current status is '${currentStatus}' (must be 'under_review')`, 400, origin);
       const reason = typeof b.rejectionReason === 'string' ? b.rejectionReason : null;
-      const reviewer = typeof b.reviewedBy === 'string' ? b.reviewedBy : null;
-      await sql()`UPDATE credit_applications SET status = 'rejected', rejection_reason = ${reason}, reviewed_at = ${now}, reviewed_by = ${reviewer}, updated_at = ${now} WHERE id = ${existing.id}`;
+      await sql()`UPDATE credit_applications SET status = 'rejected', rejection_reason = ${reason}, reviewed_at = ${now}, reviewed_by = ${auth.user.id}, updated_at = ${now} WHERE id = ${existing.id}`;
       const updatedRows = await sql()`SELECT * FROM credit_applications WHERE id = ${existing.id} LIMIT 1`;
       return jsonResponse({ application: updatedRows[0] }, 200, origin);
     }

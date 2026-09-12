@@ -464,6 +464,29 @@ describe('P0-03: customer contact model foundation in catch-all API, schema, and
     expect(code).toContain('if (!(await isValidProductId(item.productId)))');
   });
 
+  test('P0-09.1: credit-application reviewer identity is server-derived, not client-supplied', () => {
+    // P0-09 items 9/13: the financial approval record's approver identity must be
+    // the authenticated actor. The credit application approve/reject paths previously
+    // persisted a client-provided reviewedBy, so the audit record was falsifiable.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const uses = code.split('reviewed_by = ${auth.user.id}').length - 1;
+    expect(uses).toBeGreaterThanOrEqual(2); // approve branch + reject branch
+    expect(code).not.toContain('reviewedBy'); // client-supplied reviewer field removed
+  });
+
+  test('P0-09.2: all approver identity columns bind the authenticated actor', () => {
+    // P0-09 item 9 invariant across the domain: PR approval, SR close, and sourcing
+    // decisions must also record server-derived identity.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    expect(code).toContain('approved_by = $${String(++n)}');
+    expect(code).toContain('params.push(auth.user.id, now)');
+    expect(code).toContain('closed_by = ${auth.user.id}');
+    // Sourcing decisions store decided_by server-side in the VALUES binding that
+    // pairs decided_by with decided_at/created_at.
+    expect(code).toContain('decided_by, decided_at, created_at)');
+    expect(code).toContain('${auth.user.id}, ${now}, ${now})');
+  });
+
   test('P0-03.4: no duplicate customer contact/address tables were introduced', () => {
     // The smallest compatible model is additive columns on the existing
     // customer_companies row; separate customer_contacts/customer_addresses
