@@ -437,6 +437,33 @@ describe('P0-03: customer contact model foundation in catch-all API, schema, and
     expect(migration).not.toContain('RENAME');
   });
 
+  test('P0-07.1: SR creation rejects items whose product is not in the active SHANAN catalog', () => {
+    // Verification C: product IDs must resolve to valid existing products.
+    // Mirrors the RFQ path (which already rejects non-catalog products) so the
+    // Material Supply Request root cannot admit dead-end items that could never
+    // enter sourcing. The check lives in validate() BEFORE insertSupplyRequest.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    expect(code).toContain('if (!(await isValidProductId(item.productId)))');
+    expect(code).toContain("reason: 'references a non-existent SHANAN product'");
+    const checkAt = code.indexOf('if (!(await isValidProductId(item.productId)))');
+    const insertAt = code.indexOf('async function insertSupplyRequest');
+    expect(checkAt).toBeGreaterThan(-1);
+    expect(checkAt).toBeLessThan(insertAt);
+  });
+
+  test('P0-07.2: SR product validation is consistent with RFQ sourcing lineage', () => {
+    // The same catalog-gate must guard every RFQ item entry point that
+    // originates request items (RFQ create + RFQ add-item), so requests that pass
+    // SR creation can always proceed to sourcing.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    expect(code).toContain('if (!(await isValidProductId(item.product_id)))');
+    expect(code).toContain('itemIds[${i}] - request item ${ridKey} references a non-existent SHANAN product');
+    expect(code).toContain('requestItemId - request item references a non-existent SHANAN product');
+    // The SR-level gate uses the client field name productId; the RFQ-level gates
+    // operate on the normalized DB mapping product_id.
+    expect(code).toContain('if (!(await isValidProductId(item.productId)))');
+  });
+
   test('P0-03.4: no duplicate customer contact/address tables were introduced', () => {
     // The smallest compatible model is additive columns on the existing
     // customer_companies row; separate customer_contacts/customer_addresses

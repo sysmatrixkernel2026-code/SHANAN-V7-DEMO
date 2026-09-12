@@ -1626,6 +1626,9 @@ async function validate(body: any): Promise<ValidationOk | ValidationFail> {
     if (typeof item?.productId !== 'string' || !item.productId) {
       return { ok: false, field: `items[${i}].productId`, reason: 'required' };
     }
+    if (!(await isValidProductId(item.productId))) {
+      return { ok: false, field: `items[${i}].productId`, reason: 'references a non-existent SHANAN product' };
+    }
     if (typeof item?.productName !== 'string' || !item.productName) {
       return { ok: false, field: `items[${i}].productName`, reason: 'required' };
     }
