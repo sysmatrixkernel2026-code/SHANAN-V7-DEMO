@@ -1020,6 +1020,15 @@ async function recordActivityEvent(
   }
 }
 
+// P1-13: an offer that has been committed to by a 'selected' sourcing decision
+// is the commercial basis for the quoted supply request, PR and PO. It must not
+// be silently mutated or withdrawn afterwards, or the accepted quotation would
+// no longer match the evidence SHANAN acted upon.
+async function offerHasSelectedDecision(offerId: string): Promise<boolean> {
+  const selectedRows = await sql()`SELECT id FROM sourcing_decisions WHERE decision_state = 'selected' AND selected_rfq_offer_id = ${offerId} LIMIT 1`;
+  return (selectedRows[0] as { id: string } | undefined) != null;
+}
+
 // STEP 17 PHASE 2: RFQ state helpers
 async function updateSupplierResponseState(rfqSupplierId: string, rfqId: string): Promise<void> {
   const totalRows = await sql()`SELECT COUNT(*)::int AS cnt FROM rfq_items WHERE rfq_id = ${rfqId}`;
@@ -3266,6 +3275,9 @@ async function route(req: Request, method: string): Promise<Response> {
     if (!['sent', 'partially_responded', 'responded'].includes(rfqRecord.status)) {
       return errorResponse(`RFQ is ${rfqRecord.status} and does not accept offer updates`, 409, origin);
     }
+    if (await offerHasSelectedDecision(offer.id)) {
+      return errorResponse('This offer was selected in a sourcing decision and is locked. Contact the buyer for a renewed quotation.', 409, origin);
+    }
     const parsed = await tryParseJson(req);
     if (!parsed.ok) return errorResponse('Invalid JSON body', 400, origin);
     const b = parsed.body as Record<string, unknown>;
@@ -3330,6 +3342,9 @@ async function route(req: Request, method: string): Promise<Response> {
     if (!rfqRecord) return errorResponse('RFQ not found', 404, origin);
     if (!['sent', 'partially_responded', 'responded'].includes(rfqRecord.status)) {
       return errorResponse(`RFQ is ${rfqRecord.status} and does not allow offer withdrawal`, 409, origin);
+    }
+    if (await offerHasSelectedDecision(offerId)) {
+      return errorResponse('This offer was selected in a sourcing decision and is locked. Contact the buyer before withdrawing.', 409, origin);
     }
     try {
       await sql()`DELETE FROM rfq_supplier_offers WHERE id = ${offerId}`;
@@ -4679,6 +4694,9 @@ async function route(req: Request, method: string): Promise<Response> {
     try {
       await sql().begin(async (tx: any) => {
         const existingOfferRows = await tx`SELECT id FROM rfq_supplier_offers WHERE rfq_supplier_id = ${rfqSup.id} AND rfq_item_id = ${rfqItemRows[0].id} LIMIT 1`;
+        if (existingOfferRows[0] && await offerHasSelectedDecision(existingOfferRows[0].id)) {
+          throw new Error('OFFER_LOCKED');
+        }
         let offerId: string;
         if (existingOfferRows[0]) {
           offerId = existingOfferRows[0].id;
@@ -4724,6 +4742,9 @@ async function route(req: Request, method: string): Promise<Response> {
       await recordActivityEvent('OFFER_RECORDED', auth.user, { rfqId: existing.id });
       return jsonResponse({ rfq: updatedRfqRows[0] }, 200, origin);
     } catch (err) {
+      if (err instanceof Error && err.message === 'OFFER_LOCKED') {
+        return errorResponse('This offer was selected in a sourcing decision and is locked against overwrite.', 409, origin);
+      }
       console.error('[shanan-api] RFQ offer record failed:', err);
       return errorResponse('Could not record supplier offer.', 500, origin);
     }

@@ -541,6 +541,92 @@ describe('P0-03: customer contact model foundation in catch-all API, schema, and
     expect(suppliersTable).toContain('updated_by');
   });
 
+  test('P1-13.1: offers selected by a sourcing decision are locked against supplier edits', () => {
+    // P1-13 items 26/40-45: the quotation is the accepted contract. Once a
+    // decision records selected_rfq_offer_id for an offer, the supplier portal
+    // must not be able to silently change price, quantity, payment terms,
+    // validity, MOQ, lead time or notes on that offer.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const putStart = code.indexOf('// PUT /api/supplier/rfqs/:id/offers/:offerId');
+    const putEnd = code.indexOf("// DELETE /api/supplier/rfqs/:id/offers/:offerId - supplier withdraws an offer");
+    expect(putStart).toBeGreaterThan(-1);
+    expect(putEnd).toBeGreaterThan(putStart);
+    const putSection = code.slice(putStart, putEnd);
+    expect(putSection).toContain('await offerHasSelectedDecision(offer.id)');
+    expect(putSection).toContain('was selected in a sourcing decision and is locked');
+    // The lock must be checked before any UPDATE executes.
+    const guardAt = putSection.indexOf('await offerHasSelectedDecision(offer.id)');
+    const updateAt = putSection.indexOf('UPDATE rfq_supplier_offers');
+    expect(guardAt).toBeGreaterThan(-1);
+    expect(guardAt).toBeLessThan(updateAt);
+  });
+
+  test('P1-13.2: offers selected by a sourcing decision cannot be withdrawn', () => {
+    // P1-13 items 40-45/63: withdrawal deletes the quotation row a committed
+    // decision references, breaking the retained lineage and the supplier's offer.
+    // DEFERRED vs current comparator must reject state mutation before delete.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const delStart = code.indexOf("// DELETE /api/supplier/rfqs/:id/offers/:offerId - supplier withdraws an offer");
+    const delEnd = code.indexOf('// --- Supplier Product Catalog ---');
+    expect(delStart).toBeGreaterThan(-1);
+    expect(delEnd).toBeGreaterThan(delStart);
+    const delSection = code.slice(delStart, delEnd);
+    expect(delSection).toContain('await offerHasSelectedDecision(offerId)');
+    expect(delSection).toContain('before withdrawing');
+    const guardAt = delSection.indexOf('await offerHasSelectedDecision(offerId)');
+    const deleteAt = delSection.indexOf('DELETE FROM rfq_supplier_offers');
+    expect(guardAt).toBeGreaterThan(-1);
+    expect(guardAt).toBeLessThan(deleteAt);
+  });
+
+  test('P1-13.3: internal offer records cannot overwrite an offer a decision already selected', () => {
+    // P1-13 items 26/40-45: the internal record-offer route updates an existing
+    // supply offer in place; it must refuse to overwrite one that a 'selected'
+    // sourcing decision already committed to.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const recStart = code.indexOf('// POST /api/rfqs/:id/offers');
+    const recEnd = code.indexOf('// ============================================================\n  // Phase A11');
+    expect(recStart).toBeGreaterThan(-1);
+    expect(recEnd).toBeGreaterThan(recStart);
+    const recSection = code.slice(recStart, recEnd);
+    expect(recSection).toContain("await offerHasSelectedDecision(existingOfferRows[0].id)");
+    expect(recSection).toContain('OFFER_LOCKED');
+    // The lock throw happens inside the transaction before the UPDATE that
+    // overwrites the offer row.
+    const throwAt = recSection.indexOf("throw new Error('OFFER_LOCKED')");
+    const updateAt = recSection.indexOf('UPDATE rfq_supplier_offers');
+    expect(throwAt).toBeGreaterThan(-1);
+    expect(throwAt).toBeLessThan(updateAt);
+    // OFFER_LOCKED is translated to a 409, not a generic 500.
+    expect(recSection).toContain(`err.message === 'OFFER_LOCKED'`);
+    expect(recSection).toContain('409, origin');
+  });
+
+  test('P1-13.4: commit-lock helper binds to the selected-offer decision evidence', () => {
+    // P1-13 items 44/63: the helper queries sourcing_decisions for a 'selected'
+    // state referencing the offer id, the same evidence the PR/PO lineage uses.
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const helperStart = code.indexOf('async function offerHasSelectedDecision');
+    const helperEnd = code.indexOf('// STEP 17 PHASE 2: RFQ state helpers');
+    expect(helperStart).toBeGreaterThan(-1);
+    expect(helperEnd).toBeGreaterThan(helperStart);
+    const helper = code.slice(helperStart, helperEnd);
+    expect(helper).toContain('sourcing_decisions');
+    expect(helper).toContain("decision_state = 'selected'");
+    expect(helper).toContain('selected_rfq_offer_id = ${offerId}');
+  });
+
+  test('P1-13.5: no new quotation tables or quotation workflow were introduced', () => {
+    // P1-13 must not duplicate the quotation capability: the quotation remains
+    // the supplier offer + selected sourcing decision + SR 'quoted' state. No
+    // separate quotations/quotes table may be added.
+    const schema = readFileSync(fileURLToPath(new URL('../db/supabase-schema.sql', import.meta.url)), 'utf-8');
+    const tables = schema.match(/CREATE TABLE IF NOT EXISTS\s+(\w+)/g) ?? [];
+    for (const name of ['quotations', 'quotes', 'quote_items', 'quotation_items']) {
+      expect(tables.some((t) => t.includes(name))).toBe(false);
+    }
+  });
+
   test('P0-03.4: no duplicate customer contact/address tables were introduced', () => {
     // The smallest compatible model is additive columns on the existing
     // customer_companies row; separate customer_contacts/customer_addresses
