@@ -41,6 +41,7 @@ function createMemState() {
   const sessions: MemSession[] = [];
   const attempts = new Map<string, MemAttempt>();
   const events: any[] = [];
+  const companies: Array<{ id: string; reference: string; name_en: string; name_ar: string | null; account_status: string }> = [];
 
   const store: auth.AuthStore = {
     async findUserByEmail(email) {
@@ -65,6 +66,17 @@ function createMemState() {
       const idx = sessions.findIndex((s) => s.token === token);
       if (idx >= 0) sessions.splice(idx, 1);
     },
+    async updatePassword(userId, newHash, nowIso) {
+      const u = users.find((x) => x.id === userId);
+      if (u) u.password_hash = newHash;
+    },
+    async deleteSessionsForUser(userId, exceptToken) {
+      for (let i = sessions.length - 1; i >= 0; i--) {
+        if (sessions[i].userId === userId && sessions[i].token !== exceptToken) {
+          sessions.splice(i, 1);
+        }
+      }
+    },
     async createSession(token, userId, expiresAtIso) {
       sessions.push({ token, userId, expiresAt: expiresAtIso });
     },
@@ -81,6 +93,33 @@ function createMemState() {
         role: 'admin',
         company_id: null,
         supplier_id: null,
+        is_active: 1,
+      });
+    },
+    async insertCustomerUser(opts) {
+      companies.push({ id: opts.companyId, reference: opts.companyRef, name_en: opts.nameEn, name_ar: opts.nameAr, account_status: 'pending' });
+      users.push({
+        id: opts.userId,
+        name: opts.contactName,
+        email: opts.email,
+        password_hash: opts.passwordHash,
+        user_type: 'customer',
+        role: 'customer_admin',
+        company_id: opts.companyId,
+        supplier_id: null,
+        is_active: 1,
+      });
+    },
+    async insertSupplierUser(opts) {
+      users.push({
+        id: opts.userId,
+        name: opts.contactName,
+        email: opts.email,
+        password_hash: opts.passwordHash,
+        user_type: 'supplier',
+        role: 'supplier_admin',
+        company_id: null,
+        supplier_id: opts.supplierId,
         is_active: 1,
       });
     },
@@ -113,7 +152,7 @@ function createMemState() {
     },
   };
 
-  return { store, users, sessions, attempts, events };
+  return { store, users, sessions, attempts, events, companies };
 }
 
 const PASS = {
@@ -496,6 +535,188 @@ describe('POST /api/auth/register-admin (legacy bootstrap contract)', () => {
       expect((await res.json()).error).toBe(expected);
     }
     expect(fresh.users.length).toBe(0);
+  });
+});
+
+describe('POST /api/auth/register-customer', () => {
+  async function registerCustomer(payload: Record<string, unknown>, store: auth.AuthStore) {
+    return auth.handleRegisterCustomer(
+      new Request('http://x/api/auth/register-customer', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+      store,
+    );
+  }
+
+  test('creates pending customer company + customer_admin user; no session issued; 201', async () => {
+    const fresh = createMemState();
+    const res = await registerCustomer(
+      { companyName: 'Acme Trading SAOC', email: 'Acme@Example.COM', password: 'Customer-Secret-1', contactName: 'Sara Ali', country: 'OM', phone: '+968 9000 0000' },
+      fresh.store,
+    );
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(typeof body.customer.id).toBe('string');
+    expect(body.customer.reference).toMatch(/^CUS-\d{4}-[0-9A-Z]{6}$/);
+    expect(body.status).toBe('pending');
+    expect(body.token).toBeUndefined();
+    expect(JSON.stringify(body)).not.toContain('password');
+
+    expect(fresh.companies.length).toBe(1);
+    expect(fresh.companies[0].account_status).toBe('pending');
+    expect(fresh.companies[0].reference).toBe(body.customer.reference);
+
+    expect(fresh.users.length).toBe(1);
+    const created = await fresh.store.findUserByEmail('acme@example.com');
+    expect(created).not.toBeNull();
+    expect(created!.user_type).toBe('customer');
+    expect(created!.role).toBe('customer_admin');
+    expect(created!.company_id).toBe(body.customer.id);
+    expect(created!.supplier_id).toBeNull();
+    expect(Boolean(created!.is_active)).toBe(true);
+    expect(created!.password_hash?.startsWith('pbkdf2$100000$')).toBe(true);
+    expect(await auth.verifyPassword('Customer-Secret-1', created!.password_hash!)).toBe(true);
+    expect(fresh.sessions.length).toBe(0);
+  });
+
+  test('duplicate email -> 409, nothing created', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...custAdminA });
+    const initialCompanies = fresh.companies.length;
+    const res = await registerCustomer(
+      { companyName: 'Another Co', email: 'ca@customer-a.example', password: 'Customer-Secret-1', contactName: 'X' },
+      fresh.store,
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe('Email already in use');
+    expect(fresh.companies.length).toBe(initialCompanies);
+    expect(fresh.users.length).toBe(1);
+  });
+
+  test('validation errors -> 422, nothing created', async () => {
+    const fresh = createMemState();
+    const cases: Array<[Record<string, unknown>, string]> = [
+      [{ email: 'a@x.com', password: '12345678', contactName: 'X' }, 'Company name is required'],
+      [{ companyName: 'Y', password: '12345678', contactName: 'X' }, 'Valid email is required'],
+      [{ companyName: 'Y', email: 'a@x.com', contactName: 'X' }, 'Password must be at least 8 characters'],
+      [{ companyName: 'Y', email: 'a@x.com', password: '12345678' }, 'Contact name is required'],
+    ];
+    for (const [payload, expected] of cases) {
+      const res = await registerCustomer(payload, fresh.store);
+      expect(res.status).toBe(422);
+      expect((await res.json()).error).toBe(expected);
+    }
+    expect(fresh.users.length).toBe(0);
+    expect(fresh.companies.length).toBe(0);
+  });
+
+  test('rate limited -> 429 after threshold', async () => {
+    const fresh = createMemState();
+    let got429 = false;
+    for (let i = 0; i < auth.LOGIN_MAX_REQUESTS + 2; i++) {
+      const res = await registerCustomer(
+        { companyName: 'Y', email: 'rl-cust@example.com', password: '12345678', contactName: 'X' },
+        fresh.store,
+      );
+      if (res.status === 429) {
+        got429 = true;
+        expect((await res.json()).error).toBe('Too many requests. Please try again later.');
+        break;
+      }
+    }
+expect(got429).toBe(true);
+    expect(fresh.users.length).toBe(1);
+});
+});
+
+describe('POST /api/auth/change-password', () => {
+  function changeReq(token: string, currentPassword: string, newPassword: string): Request {
+    return new Request('http://x/api/auth/change-password', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
+
+  test('no token -> 401', async () => {
+    const fresh = createMemState();
+    const res = await auth.handleChangePassword(
+      new Request('http://x/api/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword: 'a', newPassword: 'b'.repeat(8) }) }),
+      fresh.store,
+    );
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('Authentication required');
+  });
+
+  test('success: re-hashes, keeps current session, revokes other sessions', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...custAdminA });
+    await auth.handleLogin(loginReq('ca@customer-a.example', PASS.customerA), fresh.store);
+    const second = await auth.handleLogin(loginReq('ca@customer-a.example', PASS.customerA), fresh.store);
+    const otherToken = (await second.json()).token;
+    expect(fresh.sessions.length).toBe(2);
+
+    const first = await auth.handleLogin(loginReq('ca@customer-a.example', PASS.customerA), fresh.store);
+    const currentToken = (await first.json()).token;
+
+    const res = await auth.handleChangePassword(changeReq(currentToken, PASS.customerA, 'New-Customer-Secret-B'), fresh.store);
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+
+    const updated = await fresh.store.findUserByEmail('ca@customer-a.example');
+    expect(await auth.verifyPassword(PASS.customerA, updated!.password_hash!)).toBe(false);
+    expect(await auth.verifyPassword('New-Customer-Secret-B', updated!.password_hash!)).toBe(true);
+
+    expect(await auth.handleMe(new Request('http://x/api/auth/me', { headers: { authorization: `Bearer ${currentToken}` } }), fresh.store)).toHaveProperty('status', 200);
+    expect(await auth.handleMe(new Request('http://x/api/auth/me', { headers: { authorization: `Bearer ${otherToken}` } }), fresh.store)).toHaveProperty('status', 401);
+    expect(fresh.sessions.some((s) => s.token === currentToken)).toBe(true);
+    expect(fresh.sessions.some((s) => s.token === otherToken)).toBe(false);
+  });
+
+  test('wrong current password -> 401, password unchanged', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...custAdminA });
+    const login = await auth.handleLogin(loginReq('ca@customer-a.example', PASS.customerA), fresh.store);
+    const token = (await login.json()).token;
+    const res = await auth.handleChangePassword(changeReq(token, 'definitely-wrong', 'New-Customer-Secret-B'), fresh.store);
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('Invalid password');
+    const updated = await fresh.store.findUserByEmail('ca@customer-a.example');
+    expect(await auth.verifyPassword(PASS.customerA, updated!.password_hash!)).toBe(true);
+  });
+
+  test('validation -> 422 for missing/short/same password', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...custAdminA });
+    const login = await auth.handleLogin(loginReq('ca@customer-a.example', PASS.customerA), fresh.store);
+    const token = (await login.json()).token;
+
+    const missing = await auth.handleChangePassword(
+      new Request('http://x/api/auth/change-password', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify({ newPassword: 'New-Customer-Secret-B' }) }),
+      fresh.store,
+    );
+    expect(missing.status).toBe(422);
+    expect((await missing.json()).error).toBe('Current password and new password are required');
+
+    const short = await auth.handleChangePassword(changeReq(token, PASS.customerA, 'short'), fresh.store);
+    expect(short.status).toBe(422);
+    expect((await short.json()).error).toBe('Password must be at least 8 characters');
+
+    const same = await auth.handleChangePassword(changeReq(token, PASS.customerA, PASS.customerA), fresh.store);
+    expect(same.status).toBe(422);
+    expect((await same.json()).error).toBe('New password must be different from the current password');
+
+    const unchanged = await fresh.store.findUserByEmail('ca@customer-a.example');
+    expect(await auth.verifyPassword(PASS.customerA, unchanged!.password_hash!)).toBe(true);
+  });
+
+  test('disabled user -> 401 (session already revoked)', async () => {
+    const fresh = createMemState();
+    fresh.users.push({ ...inactive });
+    fresh.sessions.push({ token: 'tok-disabled', userId: 'u-inactive', expiresAt: '2999-01-01T00:00:00.000Z' });
+    const res = await auth.handleChangePassword(changeReq('tok-disabled', PASS.inactive, 'New-Customer-Secret-B'), fresh.store);
+    expect(res.status).toBe(401);
   });
 });
 

@@ -35,6 +35,8 @@ export interface AuthStore {
   findUserByEmail(email: string): Promise<DBUser | null>;
   findSessionUser(token: string, nowIso: string): Promise<DBUser | null>;
   deleteSession(token: string): Promise<void>;
+  updatePassword(userId: string, newHash: string, nowIso: string): Promise<void>;
+  deleteSessionsForUser(userId: string, exceptToken?: string): Promise<void>;
   createSession(token: string, userId: string, expiresAtIso: string): Promise<void>;
   countInternalAdmins(): Promise<number>;
   insertAdminUser(opts: {
@@ -57,6 +59,22 @@ export interface AuthStore {
     email: string;
     contactPhone: string | null;
     taxId: string | null;
+    userId: string;
+    passwordHash: string;
+    nowIso: string;
+  }): Promise<void>;
+  insertCustomerUser(opts: {
+    companyId: string;
+    companyRef: string;
+    nameEn: string;
+    nameAr: string | null;
+    country: string | null;
+    city: string | null;
+    address: string | null;
+    email: string;
+    phone: string | null;
+    taxId: string | null;
+    contactName: string;
     userId: string;
     passwordHash: string;
     nowIso: string;
@@ -146,6 +164,12 @@ export function generateSupplierReference(): string {
   const year = new Date().getFullYear();
   const random = Math.random().toString(36).slice(2, 8).toUpperCase().padStart(6, '0');
   return `SUP-${year}-${random}`;
+}
+
+export function generateCustomerReference(): string {
+  const year = new Date().getFullYear();
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase().padStart(6, '0');
+  return `CUS-${year}-${random}`;
 }
 
 export function safeUserInfo(user: DBUser) {
@@ -297,6 +321,16 @@ export function createSqlStore(sql: any): AuthStore {
     async deleteSession(token) {
       await sql`DELETE FROM user_sessions WHERE token = ${token}`;
     },
+    async updatePassword(userId, newHash, nowIso) {
+      await sql`UPDATE users SET password_hash = ${newHash}, updated_at = ${nowIso} WHERE id = ${userId}`;
+    },
+    async deleteSessionsForUser(userId, exceptToken) {
+      if (exceptToken) {
+        await sql`DELETE FROM user_sessions WHERE user_id = ${userId} AND token <> ${exceptToken}`;
+      } else {
+        await sql`DELETE FROM user_sessions WHERE user_id = ${userId}`;
+      }
+    },
     async createSession(token, userId, expiresAtIso) {
       await sql`INSERT INTO user_sessions (token, user_id, expires_at) VALUES (${token}, ${userId}, ${expiresAtIso})`;
     },
@@ -326,6 +360,24 @@ export function createSqlStore(sql: any): AuthStore {
           VALUES
             (${opts.userId}, ${opts.contactName}, ${opts.email}, ${opts.passwordHash},
              'supplier', 'supplier_admin', null, ${opts.supplierId}, 1, ${opts.nowIso}, ${opts.nowIso})`;
+      });
+    },
+    async insertCustomerUser(opts) {
+      await sql.begin(async (tx: any) => {
+        await tx`
+          INSERT INTO customer_companies
+            (id, reference, name_en, name_ar, email, phone, country, city, address, tax_id,
+             account_status, payment_mode, created_at, updated_at)
+          VALUES
+            (${opts.companyId}, ${opts.companyRef}, ${opts.nameEn}, ${opts.nameAr}, ${opts.email},
+             ${opts.phone}, ${opts.country}, ${opts.city}, ${opts.address}, ${opts.taxId},
+             'pending', 'cash', ${opts.nowIso}, ${opts.nowIso})`;
+        await tx`
+          INSERT INTO users
+            (id, name, email, password_hash, user_type, role, company_id, supplier_id, is_active, created_at, updated_at)
+          VALUES
+            (${opts.userId}, ${opts.contactName}, ${opts.email}, ${opts.passwordHash},
+             'customer', 'customer_admin', ${opts.companyId}, null, 1, ${opts.nowIso}, ${opts.nowIso})`;
       });
     },
     async getAttempts(key) {
@@ -541,6 +593,115 @@ export async function handleRegisterSupplier(req: Request, store: AuthStore): Pr
   }
 }
 
+export async function handleRegisterCustomer(req: Request, store: AuthStore): Promise<Response> {
+  const nowIso = new Date().toISOString();
+  const parsed = await tryParseJson(req);
+  if (!parsed.ok) return json({ error: 'Invalid JSON body' }, 400);
+  const b = toFields(parsed.body);
+  const emailRaw = typeof b.email === 'string' ? b.email.trim().toLowerCase() : '';
+  const key = await rateLimitKey(clientIp(req), emailRaw);
+  const rl = await store.incrementAttempts(key, nowIso);
+  if (rl.attempts > LOGIN_MAX_REQUESTS) {
+    const retryAfter = Math.max(1, Math.ceil((Date.parse(rl.firstAt) + LOGIN_WINDOW_MS - Date.now()) / 1000));
+    return json({ error: 'Too many requests. Please try again later.' }, 429, { 'retry-after': String(retryAfter) });
+  }
+
+  if (typeof b.companyName !== 'string' || b.companyName.trim() === '') {
+    return json({ error: 'Company name is required' }, 422);
+  }
+  if (typeof b.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) {
+    return json({ error: 'Valid email is required' }, 422);
+  }
+  if (typeof b.password !== 'string' || b.password.length < 8) {
+    return json({ error: 'Password must be at least 8 characters' }, 422);
+  }
+  if (typeof b.contactName !== 'string' || b.contactName.trim() === '') {
+    return json({ error: 'Contact name is required' }, 422);
+  }
+  const email = b.email.trim().toLowerCase();
+
+  const dup = await store.findUserByEmail(email);
+  if (dup) return json({ error: 'Email already in use' }, 409);
+
+  try {
+    const companyId = crypto.randomUUID();
+    const companyRef = generateCustomerReference();
+    const userId = crypto.randomUUID();
+    const hash = await hashPassword(b.password);
+    await store.insertCustomerUser({
+      companyId,
+      companyRef,
+      nameEn: b.companyName.trim(),
+      nameAr: typeof b.companyNameAr === 'string' ? b.companyNameAr.trim() : null,
+      country: typeof b.country === 'string' ? b.country.trim() : null,
+      city: typeof b.city === 'string' ? b.city.trim() : null,
+      address: typeof b.address === 'string' ? b.address.trim() : null,
+      email,
+      phone: typeof b.phone === 'string' ? b.phone.trim() : null,
+      taxId: typeof b.taxId === 'string' ? b.taxId.trim() : null,
+      contactName: b.contactName.trim(),
+      userId,
+      passwordHash: hash,
+      nowIso,
+    });
+    // H1: No session token is issued for a pending customer company. Login is
+    // possible only once an internal user has approved/activated the account
+    // (customer_companies.account_status -> active).
+    return json(
+      {
+        customer: { id: companyId, reference: companyRef },
+        status: 'pending',
+        message: 'Account registration submitted for approval. You will be able to log in once your account is activated.',
+      },
+      201,
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[api/auth] customer registration failed:', msg.slice(0, 200));
+    return json({ error: 'Registration failed' }, 500);
+  }
+}
+
+export async function handleChangePassword(req: Request, store: AuthStore): Promise<Response> {
+  const nowIso = new Date().toISOString();
+  const token = bearerToken(req);
+  if (!token) return json({ error: 'Authentication required' }, 401);
+  const user = await store.findSessionUser(token, nowIso);
+  if (!user) return json({ error: 'Authentication required' }, 401);
+
+  const parsed = await tryParseJson(req);
+  if (!parsed.ok) return json({ error: 'Invalid JSON body' }, 400);
+  const b = toFields(parsed.body);
+  if (typeof b.currentPassword !== 'string' || typeof b.newPassword !== 'string' || b.currentPassword === '') {
+    return json({ error: 'Current password and new password are required' }, 422);
+  }
+  if (b.newPassword.length < 8) {
+    return json({ error: 'Password must be at least 8 characters' }, 422);
+  }
+  if (b.currentPassword === b.newPassword) {
+    return json({ error: 'New password must be different from the current password' }, 422);
+  }
+  if (!user.password_hash) return json({ error: 'Authentication required' }, 401);
+  const valid = await verifyPassword(b.currentPassword, user.password_hash);
+  if (!valid) return json({ error: 'Invalid password' }, 401);
+  if (await verifyPassword(b.newPassword, user.password_hash)) {
+    return json({ error: 'New password must be different from the current password' }, 422);
+  }
+
+  try {
+    const hash = await hashPassword(b.newPassword);
+    await store.updatePassword(user.id, hash, nowIso);
+    // Keep the current session; invalidate every other session for this user so
+    // the changed password is required everywhere else immediately.
+    await store.deleteSessionsForUser(user.id, token);
+    return json({ ok: true, message: 'Password updated' }, 200);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[api/auth] password change failed:', msg.slice(0, 200));
+    return json({ error: 'Password change failed' }, 500);
+  }
+}
+
 export async function route(req: Request, method: string, store: AuthStore): Promise<Response> {
   if (method !== 'GET' && method !== 'POST') {
     return new Response(null, { status: 405, headers: { allow: 'GET, POST' } });
@@ -553,8 +714,10 @@ export async function route(req: Request, method: string, store: AuthStore): Pro
   }
   if (sub === 'login') return handleLogin(req, store);
   if (sub === 'logout') return handleLogout(req, store);
+  if (sub === 'change-password') return handleChangePassword(req, store);
   if (sub === 'register-admin') return handleRegisterAdmin(req, store);
   if (sub === 'register-supplier') return handleRegisterSupplier(req, store);
+  if (sub === 'register-customer') return handleRegisterCustomer(req, store);
   return json({ error: 'Not found' }, 404);
 }
 

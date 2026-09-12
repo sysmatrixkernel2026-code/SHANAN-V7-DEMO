@@ -2301,6 +2301,25 @@ async function route(req: Request, method: string): Promise<Response> {
     }
   }
 
+  // GET /api/customers/me - a customer reads its own company profile
+  if (url.pathname === '/api/customers/me' && method === 'GET') {
+    const auth = await requireAuth(req, origin);
+    if (auth.error) return auth.error;
+    const supplierBlock = await requireNotSupplier(auth.user, origin);
+    if (supplierBlock) return supplierBlock;
+    if (auth.user.user_type !== 'customer' || !auth.user.company_id) {
+      return errorResponse('Customer not found', 404, origin);
+    }
+    try {
+      const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${auth.user.company_id} LIMIT 1`;
+      if (!rows[0]) return errorResponse('Customer not found', 404, origin);
+      return jsonResponse({ customer: rows[0] }, 200, origin);
+    } catch (err) {
+      console.error('[shanan-api] Customer self-profile query failed:', err);
+      return errorResponse('Could not retrieve customer.', 500, origin);
+    }
+  }
+
   // GET/PATCH /api/customers/:id
   const customerMatch = url.pathname.match(/^\/api\/customers\/([^/]+)$/);
   if (customerMatch && (method === 'GET' || method === 'PATCH')) {
@@ -2523,12 +2542,25 @@ async function route(req: Request, method: string): Promise<Response> {
         return errorResponse('Validation failed: isActive - must be boolean', 400, origin);
       }
     }
+    let passwordReset = false;
+    if (b.password !== undefined && b.password !== null) {
+      if (!isInternalAdminOrManager) return errorResponse('Forbidden: only internal admin or manager can reset a user password', 403, origin);
+      if (typeof b.password !== 'string' || b.password.length < 8) {
+        return errorResponse('Validation failed: password - must be at least 8 characters', 400, origin);
+      }
+      updates.push('password_hash = $' + String(updates.length + 1));
+      values.push(await hashPassword(b.password));
+      passwordReset = true;
+    }
     if (updates.length === 0) return errorResponse('No valid fields to update', 422, origin);
     updates.push('updated_at = $' + String(updates.length + 1));
     values.push(new Date().toISOString());
     values.push(existing.id);
     try {
       await sql().unsafe(`UPDATE users SET ${updates.join(', ')} WHERE id = $${updates.length}`, values);
+      if (passwordReset) {
+        await sql()`DELETE FROM user_sessions WHERE user_id = ${existing.id}`;
+      }
       const updatedRows = await sql()`SELECT u.id, u.name, u.email, u.user_type, u.role, u.company_id, u.is_active, u.created_at, u.updated_at, cc.reference AS company_reference, cc.name_en AS company_name_en FROM users u LEFT JOIN customer_companies cc ON u.company_id = cc.id WHERE u.id = ${existing.id} LIMIT 1`;
       return jsonResponse({ user: updatedRows[0] }, 200, origin);
     } catch (err) {
