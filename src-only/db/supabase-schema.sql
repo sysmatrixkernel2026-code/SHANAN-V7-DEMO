@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS users (
   is_active       INTEGER NOT NULL DEFAULT 1,
   created_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
   updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  updated_by      TEXT REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (company_id) REFERENCES customer_companies(id) ON DELETE SET NULL,
   CHECK (
     (user_type = 'internal' AND company_id IS NULL AND supplier_id IS NULL) OR
@@ -259,7 +260,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
   notes           TEXT,
   created_by      TEXT REFERENCES users(id) ON DELETE SET NULL,
   created_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
-  updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  updated_at      TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  updated_by      TEXT REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Circular FK enforcement after both tables exist:

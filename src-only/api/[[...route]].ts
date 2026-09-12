@@ -2609,7 +2609,9 @@ async function route(req: Request, method: string): Promise<Response> {
     }
     if (updates.length === 0) return errorResponse('No valid fields to update', 422, origin);
     updates.push('updated_at = $' + String(updates.length + 1));
+    updates.push('updated_by = $' + String(updates.length + 1));
     values.push(new Date().toISOString());
+    values.push(auth.user.id);
     values.push(existing.id);
     try {
       await sql().unsafe(`UPDATE users SET ${updates.join(', ')} WHERE id = $${updates.length}`, values);
@@ -3022,7 +3024,9 @@ async function route(req: Request, method: string): Promise<Response> {
     }
     if (updates.length === 0) return errorResponse('No valid fields to update', 422, origin);
     updates.push('updated_at = $' + String(updates.length + 1));
+    updates.push('updated_by = $' + String(updates.length + 1));
     values.push(new Date().toISOString());
+    values.push(auth.user.id);
     values.push(existing.id);
     try {
       await sql().unsafe(`UPDATE suppliers SET ${updates.join(', ')} WHERE id = $${updates.length}`, values);

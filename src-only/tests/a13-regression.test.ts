@@ -487,6 +487,60 @@ describe('P0-03: customer contact model foundation in catch-all API, schema, and
     expect(code).toContain('${auth.user.id}, ${now}, ${now})');
   });
 
+  test('P0-11.1: user role/password mutations record the authenticated actor (updated_by)', () => {
+    // P0-11 item 10: role / is_active / password-reset mutations are security-
+    // sensitive and must retain server-derived actor identity. PATCH /api/users/:id
+    // must bind updated_by to auth.user.id (never client input).
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const start = code.indexOf('// GET/PATCH /api/users/:id');
+    const end = code.indexOf('// Phase A4 - Credit Application endpoints');
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const section = code.slice(start, end);
+    expect(section).toContain("updates.push('updated_by = $' + String(updates.length + 1));");
+    expect(section).toContain('values.push(auth.user.id);');
+  });
+
+  test('P0-11.2: supplier status mutations record the authenticated actor (updated_by)', () => {
+    // P0-11 item 9: supplier activation/suspension/termination gates the supplier
+    // portal and must retain server-derived actor identity. PATCH /api/suppliers/:id
+    // must bind updated_by to auth.user.id (never client input).
+    const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+    const start = code.indexOf('// PATCH /api/suppliers/:id - update supplier (internal only)');
+    const end = code.indexOf('// Phase A9.1b - Supplier Portal Endpoints');
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const section = code.slice(start, end);
+    expect(section).toContain("updates.push('updated_by = $' + String(updates.length + 1));");
+    expect(section).toContain('values.push(auth.user.id);');
+  });
+
+  test('P0-11.3: audit attribution migration 0005 is additive and idempotent', () => {
+    // P0-11 items 9/10: the two privileged mutation surfaces that previously
+    // persisted no actor get server-derived actor columns. Mirror of P0-03.3:
+    // ADD COLUMN IF NOT EXISTS only; no schema object changes beyond the adds.
+    const migration = readFileSync(fileURLToPath(new URL('../db/migrations/0005_audit_actor_columns.sql', import.meta.url)), 'utf-8');
+    const additions = migration.split('ADD COLUMN IF NOT EXISTS updated_by').length - 1;
+    expect(additions).toBe(2); // users + suppliers
+    expect(migration).toContain('ALTER TABLE public.users');
+    expect(migration).toContain('ALTER TABLE public.suppliers');
+    expect(migration).toContain('REFERENCES public.users(id) ON DELETE SET NULL');
+    expect(migration).not.toContain('CREATE TABLE');
+    expect(migration).not.toContain('DROP');
+    expect(migration).not.toContain('ALTER COLUMN');
+    expect(migration).not.toContain('RENAME');
+  });
+
+  test('P0-11.4: canonical schema declares the actor columns on users and suppliers', () => {
+    // Fresh databases build the columns in the CREATE TABLE definitions, so the
+    // canonical schema and the additive migration agree (P0-03 pattern).
+    const schema = readFileSync(fileURLToPath(new URL('../db/supabase-schema.sql', import.meta.url)), 'utf-8');
+    const usersTable = schema.slice(schema.indexOf('CREATE TABLE IF NOT EXISTS users ('), schema.indexOf('CREATE TABLE IF NOT EXISTS credit_applications'));
+    const suppliersTable = schema.slice(schema.indexOf('CREATE TABLE IF NOT EXISTS suppliers ('), schema.indexOf('CREATE TABLE IF NOT EXISTS supplier_agreements'));
+    expect(usersTable).toContain('updated_by');
+    expect(suppliersTable).toContain('updated_by');
+  });
+
   test('P0-03.4: no duplicate customer contact/address tables were introduced', () => {
     // The smallest compatible model is additive columns on the existing
     // customer_companies row; separate customer_contacts/customer_addresses
