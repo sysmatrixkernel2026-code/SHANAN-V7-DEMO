@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS customer_companies (
   city            TEXT,
   address         TEXT,
   tax_id          TEXT,
+  -- Customer organization contact-person (P0-03, migration 0004_customer_contacts.sql).
+  contact_name    TEXT,
+  contact_title   TEXT,
+  contact_email   TEXT,
+  contact_phone   TEXT,
   account_status  TEXT NOT NULL DEFAULT 'pending'
                   CHECK (account_status IN ('pending','active','suspended','rejected','closed')),
   payment_mode    TEXT NOT NULL DEFAULT 'cash'

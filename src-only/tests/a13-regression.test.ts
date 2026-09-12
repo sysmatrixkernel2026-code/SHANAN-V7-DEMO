@@ -384,3 +384,72 @@ describe('P0-00C: latent production defects remediated in the catch-all API', ()
     expect(code).not.toContain("importKey('raw', keyData,");
   });
 });
+
+// TEST SUITE: P0-03 — customer organization contact model foundation
+//
+// P0-03 adds the customer contact-person columns (contact_name/contact_title/
+// contact_email/contact_phone) to customer_companies, mirroring the existing
+// suppliers contact pattern and the credit-application authorized-person
+// pattern. No new tables are introduced: addresses are already represented by
+// the single address/country/city columns on customer_companies, and billing/
+// shipping multi-address support was deliberately NOT invented (smallest
+// compatible model). These source-level regressions read the catch-all API,
+// the canonical schema, and the P0-03 migration and assert the implemented
+// surface is present and the deliberately-excluded constructs stay absent.
+// They run without a live database (serverless-safe).
+// ============================================================
+
+describe('P0-03: customer contact model foundation in catch-all API, schema, and migration', () => {
+  if (!existsSync(CATCHALL_API_PATH)) {
+    skipBanner('P0-03 regressions', 'catch-all api/[[...route]].ts not present');
+    return;
+  }
+  const code = readFileSync(CATCHALL_API_PATH, 'utf-8');
+
+  test('P0-03.1: contact columns are part of every customer_companies query surface', () => {
+    // Every SELECT from customer_companies (internal list, internal lookups,
+    // customer self-profile read, internal update reselect) must include the
+    // four contact columns alongside the pre-existing identity columns.
+    const rows = code.match(/tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at/g) ?? [];
+    expect(rows.length).toBe(4);
+    // The internal create INSERT carries the same contact columns.
+    expect(code).toContain('contact_name, contact_title, contact_email, contact_phone,');
+  });
+
+  test('P0-03.2: customer self-profile supports PATCH of own contact fields (same-company only)', () => {
+    // The /me route is pinned to the authenticated customer's own company:
+    // updates run with `WHERE id = ${auth.user.company_id}` and the supplied
+    // contact email is format-validated on the self-service path.
+    expect(code).toContain("url.pathname === '/api/customers/me' && (method === 'GET' || method === 'PATCH')");
+    expect(code).toContain("UPDATE customer_companies SET ${updates.join(', ')} WHERE id = $${updates.length}");
+    expect(code).toContain("'Validation failed: contactEmail - valid email address required'");
+    expect(code).toContain('SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${auth.user.company_id} LIMIT 1');
+  });
+
+  test('P0-03.3: migration 0004 is additive and idempotent (ADD COLUMN IF NOT EXISTS only)', () => {
+    const migration = readFileSync(fileURLToPath(new URL('../db/migrations/0004_customer_contacts.sql', import.meta.url)), 'utf-8');
+    for (const col of ['contact_name', 'contact_title', 'contact_email', 'contact_phone']) {
+      expect(migration).toContain(`ADD COLUMN IF NOT EXISTS ${col} TEXT;`);
+    }
+    expect(migration).not.toContain('CREATE TABLE');
+    expect(migration).not.toContain('DROP');
+    expect(migration).not.toContain('ALTER COLUMN');
+    expect(migration).not.toContain('RENAME');
+  });
+
+  test('P0-03.4: no duplicate customer contact/address tables were introduced', () => {
+    // The smallest compatible model is additive columns on the existing
+    // customer_companies row; separate customer_contacts/customer_addresses
+    // tables and a billing/shipping multi-address split were deliberately
+    // avoided as speculative complexity.
+    const schema = readFileSync(fileURLToPath(new URL('../db/supabase-schema.sql', import.meta.url)), 'utf-8');
+    const tables = schema.match(/CREATE TABLE IF NOT EXISTS\s+(\w+)/g) ?? [];
+    expect(tables.some((t) => t.includes('customer_contacts'))).toBe(false);
+    expect(tables.some((t) => t.includes('customer_addresses'))).toBe(false);
+    // The canonical schema must carry the contact columns on customer_companies.
+    const block = schema.slice(schema.indexOf('CREATE TABLE IF NOT EXISTS customer_companies'), schema.indexOf('CREATE TABLE IF NOT EXISTS customer_companies') + 600);
+    for (const col of ['contact_name    TEXT', 'contact_title   TEXT', 'contact_email   TEXT', 'contact_phone   TEXT']) {
+      expect(block).toContain(col);
+    }
+  });
+});

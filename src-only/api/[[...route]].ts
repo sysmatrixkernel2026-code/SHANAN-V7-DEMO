@@ -2244,7 +2244,7 @@ async function route(req: Request, method: string): Promise<Response> {
     const auth = await requireInternal(req, origin);
     if (auth.error) return auth.error;
     try {
-      const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, account_status, payment_mode, created_at, updated_at FROM customer_companies ORDER BY created_at DESC`;
+      const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at FROM customer_companies ORDER BY created_at DESC`;
       return jsonResponse({ customers: rows, count: rows.length }, 200, origin);
     } catch (err) {
       console.error('[shanan-api] Customer query failed:', err);
@@ -2278,6 +2278,22 @@ async function route(req: Request, method: string): Promise<Response> {
         return errorResponse(`Validation failed: accountStatus - must be one of: pending, active, suspended, rejected, closed (got: ${String(b.accountStatus)})`, 400, origin);
       }
     }
+    const contactName = typeof b.contactName === 'string' ? b.contactName.trim() : null;
+    const contactTitle = typeof b.contactTitle === 'string' ? b.contactTitle.trim() : null;
+    const contactEmail = typeof b.contactEmail === 'string' ? b.contactEmail.trim() : null;
+    const contactPhone = typeof b.contactPhone === 'string' ? b.contactPhone.trim() : null;
+    if (contactName !== null && contactName.length > 200) {
+      return errorResponse('Validation failed: contactName - must be 200 characters or fewer', 400, origin);
+    }
+    if (contactTitle !== null && contactTitle.length > 100) {
+      return errorResponse('Validation failed: contactTitle - must be 100 characters or fewer', 400, origin);
+    }
+    if (contactEmail !== null && contactEmail !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      return errorResponse('Validation failed: contactEmail - valid email address required', 400, origin);
+    }
+    if (contactPhone !== null && contactPhone.length > 50) {
+      return errorResponse('Validation failed: contactPhone - must be 50 characters or fewer', 400, origin);
+    }
     const id = generateId();
     const reference = generateCustomerReference();
     const now = new Date().toISOString();
@@ -2285,6 +2301,7 @@ async function route(req: Request, method: string): Promise<Response> {
       await sql()`
         INSERT INTO customer_companies
           (id, reference, name_en, name_ar, email, phone, country, city, address, tax_id,
+           contact_name, contact_title, contact_email, contact_phone,
            account_status, payment_mode, created_at, updated_at)
         VALUES (${id}, ${reference}, ${b.nameEn}, ${typeof b.nameAr === 'string' ? b.nameAr : null},
                 ${typeof b.email === 'string' ? b.email.trim() : null},
@@ -2293,6 +2310,7 @@ async function route(req: Request, method: string): Promise<Response> {
                 ${typeof b.city === 'string' ? b.city.trim() : null},
                 ${typeof b.address === 'string' ? b.address.trim() : null},
                 ${typeof b.taxId === 'string' ? b.taxId.trim() : null},
+                ${contactName}, ${contactTitle}, ${contactEmail}, ${contactPhone},
                 ${accountStatus}, ${paymentMode}, ${now}, ${now})`;
       return jsonResponse({ id, reference, createdAt: now }, 201, origin);
     } catch (err) {
@@ -2301,8 +2319,8 @@ async function route(req: Request, method: string): Promise<Response> {
     }
   }
 
-  // GET /api/customers/me - a customer reads its own company profile
-  if (url.pathname === '/api/customers/me' && method === 'GET') {
+  // GET/PATCH /api/customers/me - a customer reads or updates its own company profile
+  if (url.pathname === '/api/customers/me' && (method === 'GET' || method === 'PATCH')) {
     const auth = await requireAuth(req, origin);
     if (auth.error) return auth.error;
     const supplierBlock = await requireNotSupplier(auth.user, origin);
@@ -2311,7 +2329,39 @@ async function route(req: Request, method: string): Promise<Response> {
       return errorResponse('Customer not found', 404, origin);
     }
     try {
-      const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${auth.user.company_id} LIMIT 1`;
+      if (method === 'PATCH') {
+        const parsed = await tryParseJson(req);
+        if (!parsed.ok) return errorResponse('Invalid JSON body', 400, origin);
+        const b = parsed.body as Record<string, unknown>;
+        const updates: string[] = [];
+        const values: any[] = [];
+        for (const [field, col, maxLen, validator] of [
+          ['contactName', 'contact_name', 200, null],
+          ['contactTitle', 'contact_title', 100, null],
+          ['contactEmail', 'contact_email', 200, (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)],
+          ['contactPhone', 'contact_phone', 50, null],
+        ] as const) {
+          if (b[field] === undefined || b[field] === null) continue;
+          if (typeof b[field] !== 'string') {
+            return errorResponse(`Validation failed: ${field} - must be a string`, 400, origin);
+          }
+          const value = (b[field] as string).trim();
+          if (value !== '' && value.length > maxLen) {
+            return errorResponse(`Validation failed: ${field} - must be ${maxLen} characters or fewer`, 400, origin);
+          }
+          if (field === 'contactEmail' && value !== '' && validator && !validator(value)) {
+            return errorResponse('Validation failed: contactEmail - valid email address required', 400, origin);
+          }
+          updates.push(`${col} = $${String(updates.length + 1)}`);
+          values.push(value === '' ? null : value);
+        }
+        if (updates.length === 0) return errorResponse('No valid fields to update', 422, origin);
+        updates.push('updated_at = $' + String(updates.length + 1));
+        values.push(new Date().toISOString());
+        values.push(auth.user.company_id);
+        await sql().unsafe(`UPDATE customer_companies SET ${updates.join(', ')} WHERE id = $${updates.length}`, values);
+      }
+      const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${auth.user.company_id} LIMIT 1`;
       if (!rows[0]) return errorResponse('Customer not found', 404, origin);
       return jsonResponse({ customer: rows[0] }, 200, origin);
     } catch (err) {
@@ -2328,7 +2378,7 @@ async function route(req: Request, method: string): Promise<Response> {
     const customerId = decodeURIComponent(customerMatch[1]);
     if (method === 'GET') {
       try {
-        const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${customerId} OR reference = ${customerId} LIMIT 1`;
+        const rows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${customerId} OR reference = ${customerId} LIMIT 1`;
         if (!rows[0]) return errorResponse('Customer not found', 404, origin);
         return jsonResponse({ customer: rows[0] }, 200, origin);
       } catch (err) {
@@ -2364,6 +2414,8 @@ async function route(req: Request, method: string): Promise<Response> {
       ['nameEn', 'name_en'], ['nameAr', 'name_ar'], ['email', 'email'],
       ['phone', 'phone'], ['country', 'country'], ['city', 'city'],
       ['address', 'address'], ['taxId', 'tax_id'],
+      ['contactName', 'contact_name'], ['contactTitle', 'contact_title'],
+      ['contactEmail', 'contact_email'], ['contactPhone', 'contact_phone'],
     ] as const) {
       if (typeof b[field] === 'string') {
         updates.push(`${col} = $${String(updates.length + 1)}`);
@@ -2376,7 +2428,7 @@ async function route(req: Request, method: string): Promise<Response> {
     values.push(existing.id);
     try {
       await sql().unsafe(`UPDATE customer_companies SET ${updates.join(', ')} WHERE id = $${updates.length}`, values);
-      const updatedRows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${existing.id} LIMIT 1`;
+      const updatedRows = await sql()`SELECT id, reference, name_en, name_ar, email, phone, country, city, address, tax_id, contact_name, contact_title, contact_email, contact_phone, account_status, payment_mode, created_at, updated_at FROM customer_companies WHERE id = ${existing.id} LIMIT 1`;
       return jsonResponse({ customer: updatedRows[0] }, 200, origin);
     } catch (err) {
       console.error('[shanan-api] Customer update failed:', err);
