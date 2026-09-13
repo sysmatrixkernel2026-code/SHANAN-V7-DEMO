@@ -9,6 +9,7 @@ import MarketTicker from '../components/MarketTicker';
 import PlatformApplications from '../components/PlatformApplications';
 import OfficialDeviceShowcase from '../components/OfficialDeviceShowcase';
 import FeaturedProductRail from '../components/home/FeaturedProductRail';
+import ProductStream from '../components/home/ProductStream';
 import IndustrySectors from '../components/home/IndustrySectors';
 import HowShananWorks from '../components/home/HowShananWorks';
 import AIProcurement from '../components/home/AIProcurement';
@@ -164,6 +165,9 @@ export default function Home() {
 
       {/* 04 — Featured Products (real catalog rail) */}
       <FeaturedProductRail />
+
+      {/* 04b — SHANAN Product Stream (independent live feed) */}
+      <ProductStream />
 
       {/* 05 — Industry Sectors */}
       <IndustrySectors />

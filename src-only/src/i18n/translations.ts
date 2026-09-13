@@ -164,6 +164,28 @@ export type TranslationKey =
   | 'home.hero.close'
   | 'home.live.aria'
   | 'home.live.label'
+  | 'home.live.product'
+  | 'home.live.price'
+  | 'home.live.stock'
+  | 'home.live.category'
+  | 'home.live.brand'
+  | 'home.live.catalog'
+  | 'home.live.statProducts'
+  | 'home.live.statCategories'
+  | 'home.live.statBrands'
+  | 'home.live.new'
+  | 'home.stream.aria'
+  | 'home.stream.eyebrow'
+  | 'home.stream.title'
+  | 'home.stream.subtitle'
+  | 'home.stream.viewCatalog'
+  | 'home.stream.category'
+  | 'home.stream.products'
+  | 'home.stream.next'
+  | 'home.stream.prev'
+  | 'home.stream.viewProduct'
+  | 'home.stream.viewCategory'
+  | 'home.stream.counter'
   | 'home.featured.aria'
   | 'home.featured.eyebrow'
   | 'home.featured.title'
@@ -2995,8 +3017,30 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.hero.filmFallback': { en: 'The SHANAN brand film is being prepared. This space is reserved for the story video — available soon.', ar: 'يجري إعداد فيلم العلامة التجارية لشانان. هذه المساحة مخصصة لفيديو القصة — متاح قريباً.' },
   'home.hero.filmReplay': { en: 'Replay', ar: 'إعادة التشغيل' },
   'home.hero.close': { en: 'Close', ar: 'إغلاق' },
-  'home.live.aria': { en: 'SHANAN Live — announcements, products, offers, news, events and procurement opportunities', ar: 'شانان مباشر — إعلانات ومنتجات وعروض وأخبار وفعاليات وفرص مشتريات' },
+  'home.live.aria': { en: 'SHANAN Live — real product feed, prices, availability and catalog activity', ar: 'شانان مباشر — تدفق المنتجات الحقيقي والأسعار والتوفر ونشاط الكتالوج' },
   'home.live.label': { en: 'LIVE', ar: 'مباشر' },
+  'home.live.product': { en: 'PRODUCT', ar: 'منتج' },
+  'home.live.price': { en: 'PRICE', ar: 'سعر' },
+  'home.live.stock': { en: 'STOCK', ar: 'توفر' },
+  'home.live.category': { en: 'CATEGORY', ar: 'فئة' },
+  'home.live.brand': { en: 'BRAND', ar: 'علامة تجارية' },
+  'home.live.catalog': { en: 'CATALOG', ar: 'الكتالوج' },
+  'home.live.statProducts': { en: 'products', ar: 'منتج' },
+  'home.live.statCategories': { en: 'categories', ar: 'فئة' },
+  'home.live.statBrands': { en: 'brands', ar: 'علامة تجارية' },
+  'home.live.new': { en: 'New', ar: 'جديد' },
+  'home.stream.aria': { en: 'SHANAN Product Stream — automatic rotation through real categories and products with pause control', ar: 'تيار منتجات شانان — تنقل تلقائي عبر الفئات والمنتجات الحقيقية مع خاصية الإيقاف' },
+  'home.stream.eyebrow': { en: 'Independent Live Feed · Real Catalog', ar: 'تدفق مباشر مستقل · كتالوج حقيقي' },
+  'home.stream.title': { en: 'SHANAN Product Stream', ar: 'تيار منتجات شانان' },
+  'home.stream.subtitle': { en: 'A continuous rotation through real categories and real products, pulled live from the production catalog.', ar: 'تنقل مستمر عبر الفئات والمنتجات الحقيقية، سحباً مباشراً من كتالوج الإنتاج.' },
+  'home.stream.viewCatalog': { en: 'Browse Catalog', ar: 'تصفح الكتالوج' },
+  'home.stream.category': { en: 'Category', ar: 'الفئة' },
+  'home.stream.products': { en: 'products', ar: 'منتجات' },
+  'home.stream.next': { en: 'Next', ar: 'التالي' },
+  'home.stream.prev': { en: 'Previous', ar: 'السابق' },
+  'home.stream.viewProduct': { en: 'View Product', ar: 'عرض المنتج' },
+  'home.stream.viewCategory': { en: 'View Category', ar: 'عرض الفئة' },
+  'home.stream.counter': { en: 'of', ar: 'من' },
   'home.featured.aria': { en: 'Featured products — automatic showcase with pause control', ar: 'منتجات مميزة — عرض تلقائي مع خاصية الإيقاف' },
   'home.featured.eyebrow': { en: 'Real Catalog · Production Backed', ar: 'كتالوج حقيقي · مدعوم بالإنتاج' },
   'home.featured.title': { en: 'Featured Industrial Products', ar: 'منتجات صناعية مميزة' },

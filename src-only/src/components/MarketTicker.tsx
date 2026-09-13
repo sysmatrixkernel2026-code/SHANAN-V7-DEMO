@@ -1,77 +1,191 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { usePrefersReducedMotion } from './home/usePrefersReducedMotion';
+import { fetchProducts, fetchCategoriesFromApi, fetchBrandsFromApi } from '../data/catalog';
+import { getLocalizedText } from '../i18n/localization';
+import type { Product } from '../types';
 
-type TickerType = 'market' | 'offer' | 'job' | 'event' | 'shanan';
+// ------------------------------------------------------------------
+// SHANAN LIVE ticker — real, continuous marquee.
+//
+// Content comes ONLY from the production API (products, prices when
+// available, availability, catalog stats). If a content type has no
+// real data it is omitted — we never invent items to fill the track.
+// The marquee duplicates the item set into two identical halves and
+// translates by -50%, which yields a perfect seamless loop. Duration
+// is measured from the real track width so the speed (px/s) stays
+// constant regardless of how many items exist.
+// ------------------------------------------------------------------
 
-interface TickerItem {
-  id: string;
-  type: TickerType;
+const SPEED_PX_PER_SEC = 60;
+const MIN_DURATION_SEC = 8;
+
+type TickerKind = 'product' | 'price' | 'stock' | 'category' | 'brand' | 'catalog';
+
+interface BuiltItem {
+  key: string;
+  kind: TickerKind;
   label: string;
-  labelAr: string;
   text: string;
-  textAr: string;
-  priority: 'normal' | 'high';
-  isActive: boolean;
-  start?: string;
-  end?: string;
   route?: string;
   trend?: 'up' | 'down' | 'neutral';
 }
 
-const tickerItems: TickerItem[] = [
-  { id: 'm1', type: 'market', label: 'MARKET', labelAr: 'السوق', text: 'Steel HR Coil — $612/Ton', textAr: 'لفائف الصلب — 612$/طن', priority: 'normal', isActive: true, trend: 'up' },
-  { id: 'o1', type: 'offer', label: 'OFFER', labelAr: 'عرض', text: 'SKF Bearings — 15% off bulk orders until Sep 30', textAr: 'محامل SKF — خصم 15% على الطلبات بالجملة حتى 30 سبتمبر', priority: 'high', isActive: true, end: '2030-09-30', route: '/supply-request' },
-  { id: 'j1', type: 'job', label: 'JOB', labelAr: 'وظيفة', text: 'Procurement Manager — Amman, Jordan', textAr: 'مدير مشتريات — عمّان، الأردن', priority: 'normal', isActive: true },
-  { id: 'e1', type: 'event', label: 'EVENT', labelAr: 'فعالية', text: 'Jordan Industrial Manufacturing Expo — Nov 2026, Amman', textAr: 'معرض التصنيع الصناعي الأردني — نوفمبر 2026، عمّان', priority: 'high', isActive: true },
-  { id: 's1', type: 'shanan', label: 'SHANAN', labelAr: 'شانان', text: 'New category added: Industrial Automation & Control', textAr: 'فئة جديدة: الأتمتة والتحكم الصناعي', priority: 'normal', isActive: true },
-  { id: 'm2', type: 'market', label: 'MARKET', labelAr: 'السوق', text: 'Copper Cathode — $8,420/Ton', textAr: 'النحاس — 8,420$/طن', priority: 'normal', isActive: true, trend: 'down' },
-  { id: 'o2', type: 'offer', label: 'OFFER', labelAr: 'عرض', text: 'Schneider Contactors — Free shipping on orders over 50 units', textAr: 'كونتاكتورات شنايدر — شحن مجاني للطلبات فوق 50 وحدة', priority: 'normal', isActive: true, route: '/supply-request' },
-  { id: 'm3', type: 'market', label: 'MARKET', labelAr: 'السوق', text: 'Aluminum Ingot — $2,180/Ton', textAr: 'الألمنيوم — 2,180$/طن', priority: 'normal', isActive: true, trend: 'neutral' },
-  { id: 'j2', type: 'job', label: 'JOB', labelAr: 'وظيفة', text: 'Field Sales Engineer — Irbid, Jordan', textAr: 'مهندس مبيعات ميداني — إربد، الأردن', priority: 'normal', isActive: true },
-  { id: 'e2', type: 'event', label: 'EVENT', labelAr: 'فعالية', text: 'Jordan Build & Construct Expo — Dec 2026, Amman', textAr: 'معرض البناء والتشييد الأردني — ديسمبر 2026، عمّان', priority: 'high', isActive: true },
-  { id: 's2', type: 'shanan', label: 'SHANAN', labelAr: 'شانان', text: 'Live product catalog — structured specs and technical documents', textAr: 'كتالوج المنتجات المباشر — مواصفات منظمة ووثائق فنية', priority: 'normal', isActive: true, route: '/catalog' },
-  { id: 'o3', type: 'offer', label: 'OFFER', labelAr: 'عرض', text: 'Parker Hydraulic Valves — 10% off for registered buyers', textAr: 'صمامات باركر الهيدروليكية — خصم 10% للمشترين المسجلين', priority: 'normal', isActive: true, route: '/supply-request' },
-];
-
-const typeColors: Record<TickerType, string> = {
-  market: '#3A7CA5',
-  offer: '#E9A23B',
-  job: '#5FB87C',
-  event: '#6CB6E3',
-  shanan: '#D62828',
+const typeColors: Record<TickerKind, string> = {
+  product: '#3A7CA5',
+  price: '#E9A23B',
+  stock: '#5FB87C',
+  category: '#6CB6E3',
+  brand: '#6CB6E3',
+  catalog: '#D62828',
 };
+
+function formatSellPrice(product: Product): string {
+  const price = product.sellPrice;
+  if (price == null || price <= 0) return '';
+  const num = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${num} ${product.currency || 'JOD'}`;
+}
 
 export default function MarketTicker() {
   const { t, locale } = useLanguage();
   const isRtl = locale === 'ar';
   const reducedMotion = usePrefersReducedMotion();
-  const [paused, setPaused] = useState(false);
 
-  const items = [...tickerItems, ...tickerItems];
-  const frozen = reducedMotion || paused;
+  const [products, setProducts] = useState<Product[]>([]);
+  const [catCount, setCatCount] = useState(0);
+  const [brandCount, setBrandCount] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
-  const renderItem = (item: TickerItem, index: number) => {
-    const label = isRtl ? item.labelAr : item.label;
-    const text = isRtl ? item.textAr : item.text;
-    const color = typeColors[item.type];
+  const [paused, setPaused] = useState(false); // explicit pause/play button
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
 
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [durationSec, setDurationSec] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [pres, cats, brands] = await Promise.all([
+        fetchProducts({
+          search: '',
+          categoryId: null,
+          brandId: null,
+          availability: null,
+          sortBy: 'newest',
+          page: 1,
+          pageSize: 18,
+        }),
+        fetchCategoriesFromApi(),
+        fetchBrandsFromApi(),
+      ]);
+      if (cancelled) return;
+      setProducts(pres.items.filter(p => p.name?.en));
+      setCatCount(cats.length);
+      setBrandCount(brands.length);
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Measure the real half-track width so the marquee speed is constant.
+  useEffect(() => {
+    if (!loaded) return;
+    const el = trackRef.current;
+    const update = () => {
+      const half = (el?.scrollWidth ?? 0) / 2;
+      if (half > 0) setDurationSec(Math.max(MIN_DURATION_SEC, Math.round(half / SPEED_PX_PER_SEC)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (el) ro.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, [loaded]);
+
+  // Display list is derived from the raw catalog data per locale, so a
+  // language switch re-renders the identical marquee in the right text.
+  const display = useMemo<BuiltItem[]>(() => {
+    if (!loaded) return [];
+    const list: BuiltItem[] = [];
+
+    const statText = `${products.length}+ ${t('home.live.statProducts')} · ${catCount} ${t('home.live.statCategories')} · ${brandCount} ${t('home.live.statBrands')}`;
+    list.push({
+      key: 'catalog-stat',
+      kind: 'catalog',
+      label: t('home.live.catalog'),
+      text: statText,
+    });
+
+    for (const p of products) {
+      const name = getLocalizedText(p.name, locale) || p.sku;
+      const price = formatSellPrice(p);
+
+      list.push({
+        key: `product-${p.id}`,
+        kind: 'product',
+        label: t('home.live.new'),
+        text: name,
+        route: `/product/${p.id}`,
+      });
+
+      if (price) {
+        list.push({
+          key: `price-${p.id}`,
+          kind: 'price',
+          label: t('home.live.price'),
+          text: `${name} — ${price}`,
+          route: `/product/${p.id}`,
+          trend: 'up',
+        });
+      }
+
+      if (p.availability === 'in_stock' || p.availability === 'limited') {
+        const avail =
+          p.availability === 'in_stock' ? t('catalog.avail.in_stock') : t('catalog.avail.limited');
+        list.push({
+          key: `stock-${p.id}`,
+          kind: 'stock',
+          label: t('home.live.stock'),
+          text: `${name} — ${avail}`,
+          route: `/product/${p.id}`,
+        });
+      }
+    }
+
+    return list;
+  }, [loaded, t, locale, products, catCount, brandCount]);
+
+  const frozen = reducedMotion || paused || hoverPaused || focusPaused;
+
+  // No real content → no empty "LIVE" bar.
+  if (!loaded || display.length === 0) return null;
+
+  const renderItem = (item: BuiltItem, index: number) => {
+    const color = typeColors[item.kind];
+    const trend = item.trend ?? 'neutral';
     const inner = (
       <>
         <span className="ticker-label" style={{ color, borderColor: color }}>
-          {label}
+          {item.label}
         </span>
-        <span className="ticker-text">{text}</span>
-        {item.trend === 'up' && <span className="ticker-trend ticker-trend-up">▲</span>}
-        {item.trend === 'down' && <span className="ticker-trend ticker-trend-down">▼</span>}
+        <span className="ticker-text">{item.text}</span>
+        {trend === 'up' && <span className="ticker-trend ticker-trend-up">▲</span>}
+        {trend === 'down' && <span className="ticker-trend ticker-trend-down">▼</span>}
       </>
     );
 
     return (
-      <span className="ticker-item" key={`${item.id}-${index}`}>
+      <span className="ticker-item" key={`${item.key}-${index}`}>
         {item.route ? (
-          <Link to={item.route} className="ticker-inner" onClick={e => e.stopPropagation()}>
+          <Link to={item.route} className="ticker-inner" tabIndex={-1}>
             {inner}
           </Link>
         ) : (
@@ -95,12 +209,23 @@ export default function MarketTicker() {
           <span className="shanan-live-live">{t('home.live.label' as never)}</span>
         </span>
       </div>
-      <div className="shanan-live-viewport">
+      <div
+        className="shanan-live-viewport"
+        onMouseEnter={() => setHoverPaused(true)}
+        onMouseLeave={() => setHoverPaused(false)}
+        onFocusCapture={() => setFocusPaused(true)}
+        onBlurCapture={() => setFocusPaused(false)}
+      >
         <div
+          ref={trackRef}
           className="shanan-live-track"
-          style={{ animationDirection: isRtl ? 'reverse' : 'normal', animationPlayState: frozen ? 'paused' : 'running' }}
+          style={{
+            animationDuration: durationSec > 0 ? `${durationSec}s` : undefined,
+            animationDirection: isRtl ? 'reverse' : 'normal',
+            animationPlayState: frozen ? 'paused' : 'running',
+          }}
         >
-          {items.map(renderItem)}
+          {[...display, ...display].map(renderItem)}
         </div>
       </div>
       <div className="shanan-live-actions">

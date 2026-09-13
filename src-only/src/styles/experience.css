@@ -564,6 +564,7 @@
   align-items: center;
   white-space: nowrap;
   width: max-content;
+  flex: 0 0 auto;
   animation: eeTick 55s linear infinite;
   will-change: transform;
 }
@@ -1287,7 +1288,325 @@
   color: var(--ee-red);
 }
 
-/* ---- Responsive ---- */
+/* ---- SHANAN Product Stream ---- */
+.ps-section {
+  background: var(--ee-bg-2);
+  color: var(--ee-text);
+  padding: 84px 0 68px;
+  border-block-start: 1px solid var(--ee-line);
+  position: relative;
+  overflow: hidden;
+}
+.ps-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 36px;
+  align-items: stretch;
+}
+.ps-cat {
+  background: var(--ee-bg-3);
+  border: 1px solid var(--ee-line);
+  border-radius: var(--ee-radius);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+.ps-cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ps-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #fff;
+  background: var(--ee-red);
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+.ps-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: eeBlink 1.6s ease infinite;
+}
+.ps-cat-count {
+  font-size: 12px;
+  color: var(--ee-text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ps-cat-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ee-text-dim);
+  margin-block-start: 6px;
+}
+.ps-cat-name {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #fff;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.ps-next-list {
+  margin-block-start: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ps-next-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ee-text-dim);
+}
+.ps-next-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ps-next-chip {
+  font-size: 12px;
+  color: var(--ee-text-dim);
+  border: 1px solid var(--ee-line);
+  border-radius: 999px;
+  padding: 5px 11px;
+  text-decoration: none;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.ps-next-chip:hover {
+  color: #fff;
+  border-color: var(--ee-red);
+}
+.ps-cat-cta {
+  margin-block-start: auto;
+  align-self: flex-start;
+}
+.ps-stage {
+  position: relative;
+  height: 460px;
+  border-radius: var(--ee-radius);
+  overflow: hidden;
+  background: var(--ee-bg-3);
+  border: 1px solid var(--ee-line);
+}
+.ps-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.ps-layer-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.ps-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.ps-card-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--ee-bg);
+}
+.ps-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.9s ease;
+}
+.ps-card-media:hover .ps-card-img {
+  transform: scale(1.03);
+}
+.ps-card-img-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ps-card-fallback-text {
+  font-size: 13px;
+  color: var(--ee-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.ps-card-brand {
+  position: absolute;
+  inset-block-end: 14px;
+  inset-inline-start: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 10px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+.ps-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 34px 30px;
+  justify-content: center;
+}
+.ps-avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+.ps-avail-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ps-avail-in { color: #5FB87C; background: rgba(95, 184, 124, 0.12); }
+.ps-avail-limited { color: #E9A23B; background: rgba(233, 162, 59, 0.12); }
+.ps-avail-out { color: #E4574B; background: rgba(228, 87, 75, 0.12); }
+.ps-avail-request { color: var(--ee-soft); background: rgba(75, 85, 99, 0.16); }
+.ps-card-name {
+  font-size: 26px;
+  line-height: 1.22;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ps-card-name a {
+  color: inherit;
+  text-decoration: none;
+}
+.ps-card-name a:hover {
+  color: var(--ee-red-2);
+}
+.ps-card-sku {
+  font-size: 12px;
+  color: var(--ee-text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ps-card-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  border: 1px solid var(--ee-line);
+  border-radius: 10px;
+  padding: 9px 14px;
+  background: var(--ee-bg);
+}
+.ps-card-price-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ee-red-2);
+}
+.ps-card-price-cur {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ee-text-dim);
+  letter-spacing: 0.08em;
+}
+.ps-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-block-start: 2px;
+}
+.ps-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-block-start: 18px;
+  flex-wrap: wrap;
+}
+.ps-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ps-counter-now {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+.ps-counter-of {
+  font-size: 12px;
+  color: var(--ee-text-dim);
+}
+.ps-counter-total {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-text-dim);
+}
+.ps-control-btns {
+  display: inline-flex;
+  gap: 8px;
+}
+.ps-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--ee-line);
+  background: var(--ee-bg-3);
+  color: var(--ee-text-dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.ps-btn:hover {
+  color: #fff;
+  border-color: var(--ee-red);
+  background: rgba(214, 40, 40, 0.14);
+}
+.ps-btn-play-on {
+  color: #fff;
+  border-color: var(--ee-red);
+  background: rgba(214, 40, 40, 0.18);
+}
+[dir="rtl"] .ps-control-btns .ps-btn-play-on { background: rgba(214, 40, 40, 0.18); }
+[dir="rtl"] .ps-btn:first-of-type svg,
+[dir="rtl"] .ps-btn:last-of-type svg {
+  transform: scaleX(-1);
+}
+
 @media (max-width: 1199px) {
   .ee-how-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1302,6 +1621,32 @@
     --ee-card-w: calc(33.333% - 13.333px);
   }
   .ee-industry-stage {
+    height: 420px;
+  }
+  .ps-layout {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .ps-cat {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    padding: 20px 22px;
+  }
+  .ps-cat-name {
+    font-size: 24px;
+  }
+  .ps-cat-cta {
+    margin-block-start: 0;
+  }
+  .ps-next-list {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-block-start: 0;
+  }
+  .ps-stage {
     height: 420px;
   }
 }
@@ -1352,6 +1697,33 @@
     inset-block-end: 26px;
     right: 24px;
   }
+  .ps-section {
+    padding: 64px 0 52px;
+  }
+  .ps-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: 54% 1fr;
+  }
+  .ps-card-body {
+    padding: 16px 18px;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+  .ps-card-name {
+    font-size: 20px;
+  }
+  .ps-card-price {
+    padding: 7px 11px;
+  }
+  .ps-card-price-num {
+    font-size: 18px;
+  }
+  .ps-stage {
+    height: 560px;
+  }
+  .ps-cat-name {
+    font-size: 22px;
+  }
 }
 @media (max-width: 479px) {
   .ee-rail-track {
@@ -1375,6 +1747,12 @@
   }
   .ee-industry-arrow-next {
     inset-inline-end: 10px;
+  }
+  .ps-stage {
+    height: 560px;
+  }
+  .ps-controls {
+    justify-content: center;
   }
 }
 
@@ -1400,5 +1778,15 @@
   }
   .ee-rail-track {
     transition: none !important;
+  }
+  .ps-layer {
+    transition: none !important;
+    transform: none !important;
+  }
+  .ps-card-img {
+    transition: none !important;
+  }
+  .ps-live-dot {
+    animation: none !important;
   }
 }
