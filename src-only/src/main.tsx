@@ -6,6 +6,7 @@ import { LanguageProvider } from './i18n/LanguageContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/global.css'
 import './styles/components.css'
+import './styles/experience.css'
 
 ReactDOM.createRoot(document.getElementById('root')!)
   .render(

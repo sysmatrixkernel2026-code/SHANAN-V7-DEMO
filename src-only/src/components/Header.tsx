@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useSupplyRequest } from '../context/SupplyRequestContext';
@@ -8,7 +8,15 @@ export default function Header() {
   const { itemCount } = useSupplyRequest();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +38,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="header">
+    <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
       {/* Top bar */}
       <div className="header-topbar">
         <div className="container header-topbar-inner">

@@ -152,6 +152,104 @@ export type TranslationKey =
   | 'home.supplierStep1'
   | 'home.supplierStep2'
   | 'home.supplierStep3'
+  // Experience Engine (v2) home sections
+  | 'home.motion.prev'
+  | 'home.motion.next'
+  | 'home.motion.pause'
+  | 'home.motion.play'
+  | 'home.hero.watchStory'
+  | 'home.hero.filmCaption'
+  | 'home.hero.filmFallback'
+  | 'home.hero.filmReplay'
+  | 'home.hero.close'
+  | 'home.live.aria'
+  | 'home.live.label'
+  | 'home.featured.aria'
+  | 'home.featured.eyebrow'
+  | 'home.featured.title'
+  | 'home.featured.subtitle'
+  | 'home.featured.view'
+  | 'home.industry.aria'
+  | 'home.industry.eyebrow'
+  | 'home.industry.title'
+  | 'home.industry.subtitle'
+  | 'home.industry.cta'
+  | 'home.industry.sec1.title'
+  | 'home.industry.sec1.desc'
+  | 'home.industry.sec2.title'
+  | 'home.industry.sec2.desc'
+  | 'home.industry.sec3.title'
+  | 'home.industry.sec3.desc'
+  | 'home.industry.sec4.title'
+  | 'home.industry.sec4.desc'
+  | 'home.industry.sec5.title'
+  | 'home.industry.sec5.desc'
+  | 'home.industry.sec6.title'
+  | 'home.industry.sec6.desc'
+  | 'home.how.aria'
+  | 'home.how.eyebrow'
+  | 'home.how.title'
+  | 'home.how.subtitle'
+  | 'home.how.principle'
+  | 'home.how.cta'
+  | 'home.how.customerLabel'
+  | 'home.how.shananLabel'
+  | 'home.how.protectedLabel'
+  | 'home.how.supplyLabel'
+  | 'home.how.evalLabel'
+  | 'home.how.quotationLabel'
+  | 'home.how.s1.title'
+  | 'home.how.s1.text'
+  | 'home.how.s2.title'
+  | 'home.how.s2.text'
+  | 'home.how.s3.title'
+  | 'home.how.s3.text'
+  | 'home.how.s4.title'
+  | 'home.how.s4.text'
+  | 'home.how.s5.title'
+  | 'home.how.s5.text'
+  | 'home.how.s6.title'
+  | 'home.how.s6.text'
+  | 'home.how.s7.title'
+  | 'home.how.s7.text'
+  | 'home.how.s8.title'
+  | 'home.how.s8.text'
+  | 'home.how.s9.title'
+  | 'home.how.s9.text'
+  | 'home.how.s10.title'
+  | 'home.how.s10.text'
+  | 'home.ai.eyebrow'
+  | 'home.ai.title'
+  | 'home.ai.subtitle'
+  | 'home.ai.placeholder'
+  | 'home.ai.chip1'
+  | 'home.ai.chip2'
+  | 'home.ai.chip3'
+  | 'home.ai.submit'
+  | 'home.ai.copy'
+  | 'home.ai.copied'
+  | 'home.ai.edit'
+  | 'home.ai.received'
+  | 'home.ai.stage1'
+  | 'home.ai.stage2'
+  | 'home.ai.stage3'
+  | 'home.ai.stage4'
+  | 'home.ai.cta'
+  | 'home.knowledge.aria'
+  | 'home.knowledge.eyebrow'
+  | 'home.knowledge.title'
+  | 'home.knowledge.subtitle'
+  | 'home.knowledge.cta'
+  | 'home.knowledge.type.engineering'
+  | 'home.knowledge.type.sourcing'
+  | 'home.knowledge.type.procurement'
+  | 'home.knowledge.type.event'
+  | 'home.knowledge.k1Title'
+  | 'home.knowledge.k1Desc'
+  | 'home.knowledge.k2Title'
+  | 'home.knowledge.k2Desc'
+  | 'home.knowledge.k3Title'
+  | 'home.knowledge.k3Desc'
   // Catalog
   | 'catalog.title'
   | 'catalog.results'
@@ -2873,4 +2971,102 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'supplier.termDeactivated': { en: 'Product term deactivated.', ar: 'تم تعطيل شرط المنتج.' },
   'supplier.termDeactivateError': { en: 'Could not deactivate product term.', ar: 'تعذّر تعطيل شرط المنتج.' },
   'supplier.noProductTerms': { en: 'No product terms in this agreement yet.', ar: 'لا توجد شروط منتجات في هذه الاتفاقية بعد.' },
+  // Experience Engine (v2) - homepage sections
+  'home.motion.prev': { en: 'Previous', ar: 'السابق' },
+  'home.motion.next': { en: 'Next', ar: 'التالي' },
+  'home.motion.pause': { en: 'Pause auto-motion', ar: 'إيقاف الحركة التلقائية' },
+  'home.motion.play': { en: 'Resume auto-motion', ar: 'استئناف الحركة التلقائية' },
+  'home.hero.watchStory': { en: 'Watch Story', ar: 'شاهد القصة' },
+  'home.hero.filmCaption': { en: 'SHANAN — Industrial Equipment. Engineering Knowledge. AI-powered Procurement.', ar: 'شانان — المعدات الصناعية. المعرفة الهندسية. مشتريات مدعومة بالذكاء الاصطناعي.' },
+  'home.hero.filmFallback': { en: 'The SHANAN brand film is being prepared. This space is reserved for the story video — available soon.', ar: 'يجري إعداد فيلم العلامة التجارية لشانان. هذه المساحة مخصصة لفيديو القصة — متاح قريباً.' },
+  'home.hero.filmReplay': { en: 'Replay', ar: 'إعادة التشغيل' },
+  'home.hero.close': { en: 'Close', ar: 'إغلاق' },
+  'home.live.aria': { en: 'SHANAN Live — announcements, products, offers, news, events and procurement opportunities', ar: 'شانان مباشر — إعلانات ومنتجات وعروض وأخبار وفعاليات وفرص مشتريات' },
+  'home.live.label': { en: 'LIVE', ar: 'مباشر' },
+  'home.featured.aria': { en: 'Featured products — automatic showcase with pause control', ar: 'منتجات مميزة — عرض تلقائي مع خاصية الإيقاف' },
+  'home.featured.eyebrow': { en: 'Real Catalog · Production Backed', ar: 'كتالوج حقيقي · مدعوم بالإنتاج' },
+  'home.featured.title': { en: 'Featured Industrial Products', ar: 'منتجات صناعية مميزة' },
+  'home.featured.subtitle': { en: 'Live from the SHANAN catalog — real products and specifications, updated continuously.', ar: 'مباشرة من كتالوج شانان — منتجات ومواصفات حقيقية، تُحدَّث باستمرار.' },
+  'home.featured.view': { en: 'View Product', ar: 'عرض المنتج' },
+  'home.industry.aria': { en: 'Industry sectors — automatic showcase with pause control', ar: 'القطاعات الصناعية — عرض تلقائي مع خاصية الإيقاف' },
+  'home.industry.eyebrow': { en: 'Industry Sectors', ar: 'القطاعات الصناعية' },
+  'home.industry.title': { en: 'Engineered Across Every Sector', ar: 'هندسة لكل قطاع' },
+  'home.industry.subtitle': { en: 'SHANAN sources the equipment that keeps critical sectors running.', ar: 'تورّد شانان المعدات التي تُبقي القطاعات الحيوية تعمل.' },
+  'home.industry.cta': { en: 'Explore the Catalog', ar: 'استكشف الكتالوج' },
+  'home.industry.sec1.title': { en: 'Oil & Gas', ar: 'النفط والغاز' },
+  'home.industry.sec1.desc': { en: 'Valves, instrumentation and process equipment across the full energy chain.', ar: 'صمامات وأدوات قياس ومعدات تشغيل عبر سلسلة الطاقة كاملة.' },
+  'home.industry.sec2.title': { en: 'Energy', ar: 'الطاقة' },
+  'home.industry.sec2.desc': { en: 'Power generation, electrical distribution and renewables infrastructure.', ar: 'توليد الطاقة وتوزيع الكهرباء وبنية الطاقة المتجددة.' },
+  'home.industry.sec3.title': { en: 'Water & Environment', ar: 'المياه والبيئة' },
+  'home.industry.sec3.desc': { en: 'Pumps, treatment equipment and environmental monitoring technology.', ar: 'مضخات ومعدات معالجة وتقنيات مراقبة بيئية.' },
+  'home.industry.sec4.title': { en: 'Manufacturing', ar: 'التصنيع' },
+  'home.industry.sec4.desc': { en: 'Mechanical components, tooling and production-line support systems.', ar: 'مكونات ميكانيكية وعدد وأنظمة دعم خطوط الإنتاج.' },
+  'home.industry.sec5.title': { en: 'Construction', ar: 'الإنشاءات' },
+  'home.industry.sec5.desc': { en: 'Safety equipment, finishing materials and site infrastructure.', ar: 'معدات السلامة ومواد التشطيبات وبنية المواقع.' },
+  'home.industry.sec6.title': { en: 'Infrastructure', ar: 'البنية التحتية' },
+  'home.industry.sec6.desc': { en: 'Heavy components, electrical systems and civil works hardware.', ar: 'مكونات ثقيلة وأنظمة كهربائية وعدد للأعمال المدنية.' },
+  'home.how.aria': { en: 'How SHANAN works — the commercial model and sourcing process', ar: 'كيف تعمل شانان — النموذج التجاري وعملية التوريد' },
+  'home.how.eyebrow': { en: 'The SHANAN Method', ar: 'منهج شانان' },
+  'home.how.title': { en: 'How SHANAN Works', ar: 'كيف تعمل شانان' },
+  'home.how.subtitle': { en: 'One commercial partner from requirement to delivery.', ar: 'شريك تجاري واحد من الطلب حتى التسليم.' },
+  'home.how.principle': { en: 'You deal with SHANAN. SHANAN handles the sourcing complexity behind the scenes.', ar: 'تتعامل مع شانان. تتولى شانان تعقيد التوريد خلف الكواليس.' },
+  'home.how.cta': { en: 'Start a Supply Request', ar: 'ابدأ طلب توريد' },
+  'home.how.customerLabel': { en: 'Customer', ar: 'العميل' },
+  'home.how.shananLabel': { en: 'SHANAN', ar: 'شانان' },
+  'home.how.protectedLabel': { en: 'Protected SHANAN Supplier Network', ar: 'شبكة موردي شانان المحمية' },
+  'home.how.supplyLabel': { en: 'Supplier Network', ar: 'شبكة الموردين' },
+  'home.how.evalLabel': { en: 'Sourcing & Evaluation', ar: 'التوريد والتقييم' },
+  'home.how.quotationLabel': { en: 'SHANAN Quotation', ar: 'عرض سعر شانان' },
+  'home.how.s1.title': { en: 'Customer Need', ar: 'حاجة العميل' },
+  'home.how.s1.text': { en: 'Engineers and procurement teams tell SHANAN what a project needs.', ar: 'يخبر المهندسون وفرق المشتريات شانان بما يحتاجه المشروع.' },
+  'home.how.s2.title': { en: 'AI Understanding', ar: 'الفهم بالذكاء الاصطناعي' },
+  'home.how.s2.text': { en: 'SHANAN interprets the requirement and builds a structured specification.', ar: 'تفسّر شانان المتطلب وتبني مواصفة منظمة.' },
+  'home.how.s3.title': { en: 'Engineering & Specification Analysis', ar: 'التحليل الهندسي للمواصفات' },
+  'home.how.s3.text': { en: 'SHANAN engineers analyse the specification against standards and real applications.', ar: 'يحلل مهندسو شانان المواصفة وفق المعايير والتطبيقات الفعلية.' },
+  'home.how.s4.title': { en: 'Product Matching', ar: 'مطابقة المنتجات' },
+  'home.how.s4.text': { en: 'Matching products are identified from the structured catalog.', ar: 'تُحدَّد المنتجات المطابقة من الكتالوج المنظم.' },
+  'home.how.s5.title': { en: 'Protected SHANAN Sourcing', ar: 'التوريد المحمي عبر شانان' },
+  'home.how.s5.text': { en: 'Only SHANAN engages the protected internal supplier network — never the customer.', ar: 'تتعامل شانان وحدها مع شبكة الموردين الداخلية المحمية — لا العميل أبداً.' },
+  'home.how.s6.title': { en: 'Internal Evaluation', ar: 'التقييم الداخلي' },
+  'home.how.s6.text': { en: 'SHANAN evaluates options internally on price, availability and lead time.', ar: 'تقيّم شانان الخيارات داخلياً من حيث السعر والتوفر ومدة التسليم.' },
+  'home.how.s7.title': { en: 'SHANAN Quotation', ar: 'عرض سعر شانان' },
+  'home.how.s7.text': { en: 'You receive one clear SHANAN quotation — no suppliers exposed.', ar: 'تحصل على عرض سعر شانان واحد واضح — دون كشف الموردين.' },
+  'home.how.s8.title': { en: 'Approval & Order', ar: 'الموافقة والطلب' },
+  'home.how.s8.text': { en: 'Approve the quotation and place your order with SHANAN.', ar: 'وافق على عرض السعر وأصدر طلبك عبر شانان.' },
+  'home.how.s9.title': { en: 'Supply & Delivery', ar: 'التوريد والتسليم' },
+  'home.how.s9.text': { en: 'SHANAN manages supply, delivery and verification.', ar: 'تدير شانان التوريد والتسليم والتحقق.' },
+  'home.how.s10.title': { en: 'Support', ar: 'الدعم' },
+  'home.how.s10.text': { en: 'SHANAN stays with you through installation, documents and after-sales support.', ar: 'تبقى شانان معك عبر التركيب والوثائق ودعم ما بعد البيع.' },
+  'home.ai.eyebrow': { en: 'AI Procurement Experience', ar: 'تجربة المشتريات الذكية' },
+  'home.ai.title': { en: 'Describe What Your Project Needs', ar: 'صف ما يحتاجه مشروعك' },
+  'home.ai.subtitle': { en: 'Write the requirement the way you would ask a colleague. SHANAN turns it into engineering structure.', ar: 'اكتب المتطلب كما تسأل زميلاً. تحوّله شانان إلى هيكل هندسي.' },
+  'home.ai.placeholder': { en: 'e.g. "I need a pump for a water treatment project"', ar: 'مثال: "أحتاج مضخة لمشروع معالجة مياه"' },
+  'home.ai.chip1': { en: 'A pump for a water treatment project', ar: 'مضخة لمشروع معالجة مياه' },
+  'home.ai.chip2': { en: 'Safety equipment for a construction site', ar: 'معدات سلامة لموقع إنشاءات' },
+  'home.ai.chip3': { en: 'Industrial valves for a process plant', ar: 'صمامات صناعية لمصنع معالجة' },
+  'home.ai.submit': { en: 'Send to SHANAN Engineering', ar: 'أرسل إلى هندسة شانان' },
+  'home.ai.copy': { en: 'Copy requirement', ar: 'نسخ المتطلب' },
+  'home.ai.copied': { en: 'Copied', ar: 'تم النسخ' },
+  'home.ai.edit': { en: 'Edit requirement', ar: 'تعديل المتطلب' },
+  'home.ai.received': { en: 'Requirement received', ar: 'تم استلام المتطلب' },
+  'home.ai.stage1': { en: 'Requirement received', ar: 'تم استلام المتطلب' },
+  'home.ai.stage2': { en: 'Engineering analysis', ar: 'التحليل الهندسي' },
+  'home.ai.stage3': { en: 'Protected sourcing', ar: 'التوريد المحمي' },
+  'home.ai.stage4': { en: 'SHANAN quotation', ar: 'عرض سعر شانان' },
+  'home.ai.cta': { en: 'Continue to Supply Request', ar: 'متابعة إلى طلب التوريد' },
+  'home.knowledge.aria': { en: 'Industrial knowledge — news, engineering content and SHANAN updates', ar: 'المعرفة الصناعية — أخبار ومحتوى هندسي وتحديثات شانان' },
+  'home.knowledge.eyebrow': { en: 'Industrial Intelligence', ar: 'الاستخبارات الصناعية' },
+  'home.knowledge.title': { en: 'News, Projects & Engineering Knowledge', ar: 'الأخبار والمشاريع والمعرفة الهندسية' },
+  'home.knowledge.subtitle': { en: 'Industry news, engineering knowledge and SHANAN updates in one channel.', ar: 'أخبار الصناعة والمعرفة الهندسية وتحديثات شانان في قناة واحدة.' },
+  'home.knowledge.cta': { en: 'View All', ar: 'عرض الكل' },
+  'home.knowledge.type.engineering': { en: 'Engineering', ar: 'هندسة' },
+  'home.knowledge.type.sourcing': { en: 'Sourcing', ar: 'توريد' },
+  'home.knowledge.type.procurement': { en: 'Procurement Insight', ar: 'رؤية مشتريات' },
+  'home.knowledge.type.event': { en: 'Event', ar: 'فعالية' },
+  'home.knowledge.k1Title': { en: 'How SHANAN structures product specifications', ar: 'كيف تنظّم شانان مواصفات المنتجات' },
+  'home.knowledge.k1Desc': { en: 'Every product carries structured specifications, technical metadata and documents — so comparisons stay meaningful.', ar: 'يحمل كل منتج مواصفات منظمة وبيانات تقنية ووثائق — لتبقى المقارنات ذات معنى.' },
+  'home.knowledge.k2Title': { en: 'The protected supplier network, explained', ar: 'شبكة الموردين المحمية، بالتفصيل' },
+  'home.knowledge.k2Desc': { en: 'Customers receive one SHANAN quotation. The internal network and margins stay behind SHANAN.', ar: 'يحصل العميل على عرض سعر واحد من شانان. الشبكة الداخلية والهوامش تبقى خلف شانان.' },
+  'home.knowledge.k3Title': { en: 'From requirement to delivery in ten steps', ar: 'من الطلب إلى التسليم في عشر خطوات' },
+  'home.knowledge.k3Desc': { en: 'A structured path: need, engineering, matching, protected sourcing, evaluation, quotation, order, delivery, support.', ar: 'مسار منظم: الحاجة، الهندسة، المطابقة، التوريد المحمي، التقييم، عرض السعر، الطلب، التسليم، الدعم.' },
 };

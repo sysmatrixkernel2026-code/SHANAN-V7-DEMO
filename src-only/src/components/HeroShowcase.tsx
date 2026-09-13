@@ -1,7 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { ArrowIcon } from './icons';
+import { usePrefersReducedMotion } from './home/usePrefersReducedMotion';
+
+// The brand film is prepared as a future controlled capability. Until the
+// production film asset exists, FILM_SRC stays empty and the player falls
+// back to an honest "in production" poster instead of fabricated video.
+const FILM_SRC = '';
 
 type SlideType = 'product' | 'video' | 'offer' | 'announce' | 'event';
 
@@ -90,149 +96,229 @@ const slides: Slide[] = [
 const SLIDE_DURATION = 6000;
 
 export default function HeroShowcase() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
+  const reducedMotion = usePrefersReducedMotion();
   const [current, setCurrent] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [autoplayOn, setAutoplayOn] = useState(() => !reducedMotion);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [filmOpen, setFilmOpen] = useState(false);
 
   const next = useCallback(() => setCurrent(c => (c + 1) % slides.length), []);
   const prev = useCallback(() => setCurrent(c => (c - 1 + slides.length) % slides.length), []);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (!autoplayOn || hoverPaused || reducedMotion) return;
     const timer = setInterval(next, SLIDE_DURATION);
     return () => clearInterval(timer);
-  }, [isPaused, next]);
+  }, [autoplayOn, hoverPaused, reducedMotion, next]);
 
   const slide = slides[current];
 
   return (
     <section
-      className="hero-showcase"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      aria-roledescription="carousel"
-      aria-label="SHANAN showcase"
+      className="hero-showcase ee-hero"
+      onMouseEnter={() => setHoverPaused(true)}
+      onMouseLeave={() => setHoverPaused(false)}
     >
-      {/* Left: stable branded content */}
-      <div className="hero-content-panel">
-        <div className="container hero-content-inner">
-          <span className="hero-brand-badge">
-            <img src="/shanan-logo.png" alt="SHANAN" className="hero-brand-logo" width="28" height="28" />
-            <span className="hero-brand-text">SHANAN</span>
-          </span>
-          <p className="hero-brand-line">{t('home.heroBrandLine')}</p>
-          <h1 className="hero-headline">{t('home.heroTitle')}</h1>
-          <p className="hero-subtitle">{t('home.heroSubtitle')}</p>
-          <div className="hero-pills">
-            <span className="hero-pill">{t('home.heroPill1')}</span>
-            <span className="hero-pill">{t('home.heroPill2')}</span>
-            <span className="hero-pill">{t('home.heroPill3')}</span>
-            <span className="hero-pill">{t('home.heroPill4')}</span>
-          </div>
-          <div className="hero-actions">
-            <Link to="/catalog" className="btn btn-primary btn-lg hero-enter-btn">
-              {t('home.heroCta')}
-              <ArrowIcon />
-            </Link>
-            <Link to="/supply-request" className="btn btn-outline btn-lg hero-outline-btn">
-              {t('home.heroSecondary')}
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Right: cycling visual showcase */}
-      <div className="hero-visual-panel">
-        {/* Device mockups (laptop + phone + stats note) removed from hero —
-            the official device images are presented in the dedicated
-            OfficialDeviceShowcase section further down the page instead. */}
-        <div className="hero-showcase-track">
-          {slides.map((s, i) => (
-            <div
-              key={s.id}
-              className={`hero-showcase-slide ${i === current ? 'hero-showcase-slide-active' : ''}`}
-              aria-hidden={i !== current}
-            >
-              <div className="hero-showcase-bg">
-                <img src={s.image} alt="" className="hero-showcase-img" loading={i === 0 ? 'eager' : 'lazy'} />
-                <div className="hero-showcase-overlay" />
-              </div>
-              <div className="hero-showcase-slide-content">
-                <span className={`hero-showcase-badge hero-showcase-badge-${s.type}`}>
-                  <BadgeIcon type={s.type} />
-                  {t(s.badgeKey as never)}
-                </span>
-                <h2 className="hero-showcase-title">{t(s.titleKey as never)}</h2>
-                <p className="hero-showcase-desc">{t(s.descKey as never)}</p>
-                {s.extra && (
-                  <div className="hero-showcase-extra">
-                    {s.extra.map((ex, j) => (
-                      <span key={j} className="hero-showcase-extra-item">
-                        <ExtraIcon icon={ex.icon} />
-                        {t(ex.key as never)}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="hero-showcase-slide-actions">
-                  <Link to={s.ctaLink} className="hero-showcase-slide-link">
-                    {t(s.ctaKey as never)}
-                    <ArrowIcon />
-                  </Link>
-                  {s.secondaryKey && s.secondaryLink && (
-                    <Link to={s.secondaryLink} className="hero-showcase-slide-link-secondary">
-                      {t(s.secondaryKey as never)}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <button className="hero-showcase-arrow hero-showcase-arrow-prev" onClick={prev} aria-label="Previous slide">
-          <ChevronIcon dir="prev" />
-        </button>
-        <button className="hero-showcase-arrow hero-showcase-arrow-next" onClick={next} aria-label="Next slide">
-          <ChevronIcon dir="next" />
-        </button>
-
-        <div className="hero-showcase-indicators">
-          {slides.map((s, i) => (
-            <button
-              key={s.id}
-              className={`hero-showcase-indicator ${i === current ? 'hero-showcase-indicator-active' : ''}`}
-              onClick={() => setCurrent(i)}
-              aria-label={`${t('home.showcase.slideLabel' as never)} ${i + 1}`}
-            >
-              <span className="hero-showcase-indicator-type">{s.type}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="hero-showcase-progress">
+      <div className="ee-hero-stage">
+        {slides.map((s, i) => (
           <div
-            className="hero-showcase-progress-bar"
-            key={current}
-            style={{ animation: `${isPaused ? 'none' : 'heroShowcaseProgress'} ${SLIDE_DURATION}ms linear` }}
-          />
+            key={s.id}
+            className={`ee-hero-slide ${i === current ? 'ee-hero-slide-active' : ''}`}
+            aria-hidden={i !== current}
+          >
+            <img
+              src={s.image}
+              alt=""
+              className="ee-hero-slide-img"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              onError={e => e.currentTarget.classList.add('ee-hero-slide-img-hidden')}
+            />
+          </div>
+        ))}
+        <div className="ee-hero-shade" />
+        <div className="ee-hero-shade ee-hero-shade-alt" />
+
+        <div className="container">
+          <div className="ee-hero-content">
+            <div className="ee-hero-logo-tile">
+              <img src="/shanan-logo.png" alt="SHANAN" width="140" height="44" />
+            </div>
+            <p className="ee-hero-brand-line">{t('home.heroBrandLine')}</p>
+            <h1 className="ee-hero-headline">{t('home.heroTitle')}</h1>
+            <p className="ee-hero-subtitle">{t('home.heroSubtitle')}</p>
+            <div className="ee-hero-pills">
+              <span className="ee-hero-pill">{t('home.heroPill1')}</span>
+              <span className="ee-hero-pill">{t('home.heroPill2')}</span>
+              <span className="ee-hero-pill">{t('home.heroPill3')}</span>
+              <span className="ee-hero-pill">{t('home.heroPill4')}</span>
+            </div>
+            <div className="ee-hero-actions">
+              <Link to="/catalog" className="btn btn-primary btn-lg ee-hero-cta">
+                {t('home.heroCta')}
+                <ArrowIcon />
+              </Link>
+              <button
+                type="button"
+                className="btn btn-outline btn-lg ee-hero-story"
+                onClick={() => setFilmOpen(true)}
+              >
+                <PlayGlyph />
+                {t('home.hero.watchStory')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="ee-hero-stage-ui container">
+          <div className="ee-hero-caption">
+            <span className={`ee-hero-caption-badge ee-hero-caption-badge-${slide.type}`}>
+              <BadgeIcon type={slide.type} />
+              {t(slide.badgeKey as never)}
+            </span>
+            <h2 className="ee-hero-caption-title">{t(slide.titleKey as never)}</h2>
+            <p className="ee-hero-caption-desc">{t(slide.descKey as never)}</p>
+            {slide.extra && (
+              <div className="ee-hero-caption-extra">
+                {slide.extra.map((ex, j) => (
+                  <span key={j} className="ee-hero-caption-extra-item">
+                    <ExtraIcon icon={ex.icon} />
+                    {t(ex.key as never)}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="ee-hero-caption-links">
+              <Link to={slide.ctaLink} className="ee-hero-caption-link">
+                {t(slide.ctaKey as never)}
+                <ArrowIcon />
+              </Link>
+              {slide.secondaryKey && slide.secondaryLink && (
+                <Link to={slide.secondaryLink} className="ee-hero-caption-link ee-hero-caption-link-secondary">
+                  {t(slide.secondaryKey as never)}
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="ee-hero-controls">
+            <button
+              type="button"
+              className="ee-hero-arrow"
+              onClick={prev}
+              aria-label={t('home.motion.prev' as never)}
+            >
+              <ChevronIcon dir="prev" />
+            </button>
+            <button
+              type="button"
+              className="ee-hero-motion"
+              onClick={() => setAutoplayOn(v => !v)}
+              aria-pressed={!autoplayOn}
+              aria-label={autoplayOn ? t('home.motion.pause' as never) : t('home.motion.play' as never)}
+            >
+              {autoplayOn ? <PauseGlyph /> : <PlayGlyph />}
+            </button>
+            <button
+              type="button"
+              className="ee-hero-arrow"
+              onClick={next}
+              aria-label={t('home.motion.next' as never)}
+            >
+              <ChevronIcon dir="next" />
+            </button>
+          </div>
+
+          <div className="ee-hero-thumbs">
+            {slides.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`ee-hero-thumb ${i === current ? 'ee-hero-thumb-active' : ''}`}
+                onClick={() => setCurrent(i)}
+                aria-label={`${t('home.showcase.slideLabel' as never)} ${i + 1}`}
+              >
+                <span className="ee-hero-thumb-bar" />
+              </button>
+            ))}
+          </div>
+
+          <div className="ee-hero-progress">
+            <div
+              className="ee-hero-progress-bar"
+              key={current}
+              style={{
+                animation:
+                  !autoplayOn || hoverPaused || reducedMotion ? 'none' : `eeHeroProgress ${SLIDE_DURATION}ms linear`,
+              }}
+            />
+          </div>
         </div>
       </div>
+
+      {filmOpen && <FilmPlayer slide={slide} onClose={() => setFilmOpen(false)} />}
     </section>
   );
 }
 
-function ShananMark() {
-  // Kept for backward compatibility; brand badge now uses the official logo image directly.
+function FilmPlayer({ slide, onClose }: { slide: Slide; onClose: () => void }) {
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
+
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-      <path d="M2 17l10 5 10-5" />
-      <path d="M2 12l10 5 10-5" />
-    </svg>
+    <div className="ee-film" role="dialog" aria-modal="true" aria-label={t('home.hero.filmCaption' as never)}>
+      <button
+        type="button"
+        className="ee-film-backdrop"
+        onClick={onClose}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+      <div className="ee-film-panel">
+        <div className="ee-film-media">
+          {FILM_SRC ? (
+            <video className="ee-film-video" src={FILM_SRC} controls preload="none" aria-label={t('home.hero.filmCaption' as never)} />
+          ) : (
+            <div className="ee-film-poster">
+              <img src={slide.image} alt="" />
+              <div className="ee-film-poster-shade" />
+              <div className="ee-film-poster-content">
+                <span className="ee-film-poster-badge">
+                  <PlayGlyph />
+                </span>
+                <h3 className="ee-film-poster-title">{t('home.hero.filmCaption' as never)}</h3>
+                <p className="ee-film-poster-text">{t('home.hero.filmFallback' as never)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="ee-film-meta">
+          <div>
+            <span className="ee-film-brand">SHANAN</span>
+            <span className="ee-film-name">{t(slide.titleKey as never)}</span>
+          </div>
+          <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
+            {t('home.hero.close' as never)}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
+/* ---- Icons ---- */
 function BadgeIcon({ type }: { type: SlideType }) {
   if (type === 'product') return <ProductIcon />;
   if (type === 'video') return <VideoIcon />;
@@ -240,7 +326,6 @@ function BadgeIcon({ type }: { type: SlideType }) {
   if (type === 'announce') return <MegaphoneIcon />;
   return <CalendarIcon />;
 }
-
 function ProductIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -279,7 +364,18 @@ function CalendarIcon() {
 }
 function ChevronIcon({ dir }: { dir: 'prev' | 'next' }) {
   return (
-    <svg className="rtl-flip" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: dir === 'prev' ? 'rotate(180deg)' : 'none' }}>
+    <svg
+      className="rtl-flip"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ transform: dir === 'prev' ? 'rotate(180deg)' : 'none' }}
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
@@ -300,6 +396,21 @@ function ClockIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+function PlayGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function PauseGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
     </svg>
   );
 }
