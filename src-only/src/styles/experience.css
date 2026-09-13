@@ -107,8 +107,15 @@
   min-height: min(92vh, 720px);
   display: flex;
   flex-direction: column;
+  padding: 72px 0 0;
+}
+.ee-hero-copy-wrap {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  padding: 72px 0 210px;
+  flex: 0 0 auto;
+  min-height: 0;
+  margin: auto 0;
 }
 .ee-hero-slide {
   position: absolute;
@@ -219,14 +226,29 @@
 
 /* Hero stage UI */
 .ee-hero-stage-ui {
-  position: absolute;
-  inset: auto 0 0 0;
+  position: relative;
   z-index: 3;
+  padding-top: 42px;
   padding-bottom: 34px;
 }
-.ee-hero-caption {
-  max-width: 680px;
+.ee-hero-caption-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   margin-bottom: 14px;
+}
+.ee-hero-caption {
+  grid-area: 1 / 1;
+  max-width: 680px;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+.ee-hero-caption-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 .ee-hero-caption-badge {
   display: inline-flex;
@@ -1304,9 +1326,10 @@
     height: 400px;
   }
   .ee-hero-stage {
-    padding: 64px 0 220px;
+    padding: 64px 0 0;
   }
   .ee-hero-stage-ui {
+    padding-top: 26px;
     padding-bottom: 26px;
   }
   .ee-hero-caption-desc {
@@ -1338,7 +1361,7 @@
     grid-template-columns: 1fr;
   }
   .ee-hero-stage {
-    padding: 58px 0 236px;
+    padding: 58px 0 0;
   }
   .ee-industry-stage {
     height: 380px;

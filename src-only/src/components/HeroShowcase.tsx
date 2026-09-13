@@ -139,7 +139,7 @@ export default function HeroShowcase() {
         <div className="ee-hero-shade" />
         <div className="ee-hero-shade ee-hero-shade-alt" />
 
-        <div className="container">
+        <div className="container ee-hero-copy-wrap">
           <div className="ee-hero-content">
             <div className="ee-hero-logo-tile">
               <img src="/shanan-logo.png" alt="SHANAN" width="104" height="104" />
@@ -171,34 +171,42 @@ export default function HeroShowcase() {
         </div>
 
         <div className="ee-hero-stage-ui container">
-          <div className="ee-hero-caption">
-            <span className={`ee-hero-caption-badge ee-hero-caption-badge-${slide.type}`}>
-              <BadgeIcon type={slide.type} />
-              {t(slide.badgeKey as never)}
-            </span>
-            <h2 className="ee-hero-caption-title">{t(slide.titleKey as never)}</h2>
-            <p className="ee-hero-caption-desc">{t(slide.descKey as never)}</p>
-            {slide.extra && (
-              <div className="ee-hero-caption-extra">
-                {slide.extra.map((ex, j) => (
-                  <span key={j} className="ee-hero-caption-extra-item">
-                    <ExtraIcon icon={ex.icon} />
-                    {t(ex.key as never)}
-                  </span>
-                ))}
+          <div className="ee-hero-caption-stack">
+            {slides.map((item, i) => (
+              <div
+                key={item.id}
+                className={`ee-hero-caption ${i === current ? 'ee-hero-caption-active' : ''}`}
+                aria-hidden={i !== current}
+              >
+                <span className={`ee-hero-caption-badge ee-hero-caption-badge-${item.type}`}>
+                  <BadgeIcon type={item.type} />
+                  {t(item.badgeKey as never)}
+                </span>
+                <h2 className="ee-hero-caption-title">{t(item.titleKey as never)}</h2>
+                <p className="ee-hero-caption-desc">{t(item.descKey as never)}</p>
+                {item.extra && (
+                  <div className="ee-hero-caption-extra">
+                    {item.extra.map((ex, j) => (
+                      <span key={j} className="ee-hero-caption-extra-item">
+                        <ExtraIcon icon={ex.icon} />
+                        {t(ex.key as never)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="ee-hero-caption-links">
+                  <Link to={item.ctaLink} className="ee-hero-caption-link">
+                    {t(item.ctaKey as never)}
+                    <ArrowIcon />
+                  </Link>
+                  {item.secondaryKey && item.secondaryLink && (
+                    <Link to={item.secondaryLink} className="ee-hero-caption-link ee-hero-caption-link-secondary">
+                      {t(item.secondaryKey as never)}
+                    </Link>
+                  )}
+                </div>
               </div>
-            )}
-            <div className="ee-hero-caption-links">
-              <Link to={slide.ctaLink} className="ee-hero-caption-link">
-                {t(slide.ctaKey as never)}
-                <ArrowIcon />
-              </Link>
-              {slide.secondaryKey && slide.secondaryLink && (
-                <Link to={slide.secondaryLink} className="ee-hero-caption-link ee-hero-caption-link-secondary">
-                  {t(slide.secondaryKey as never)}
-                </Link>
-              )}
-            </div>
+            ))}
           </div>
 
           <div className="ee-hero-controls">
