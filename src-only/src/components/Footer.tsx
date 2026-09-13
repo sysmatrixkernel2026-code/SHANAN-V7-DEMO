@@ -42,10 +42,13 @@ export default function Footer() {
         <div className="footer-col">
           <h4 className="footer-col-title">{t('footer.contact')}</h4>
           <ul className="footer-links footer-contact-list">
-            <li>{t('contact.address')}: —</li>
-            <li>{t('contact.phoneLabel')}: —</li>
-            <li>{t('contact.emailLabel')}: —</li>
-            <li>{t('contact.hours')}: {t('contact.hoursValue')}</li>
+            <li className="footer-contact-company">{t('contact.companyName')}</li>
+            <li><span>{t('contact.address')}:</span><span>{t('contact.addressValue')}</span></li>
+            <li><span>{t('contact.phoneLabel')}:</span><span>{t('contact.phoneValue')}</span></li>
+            <li><span>{t('contact.emailLabel')}:</span><span>{t('contact.emailValue')}</span></li>
+            <li><span>{t('contact.websiteLabel')}:</span><span><a href="https://www.shanantools.com" target="_blank" rel="noopener noreferrer">{t('contact.websiteValue')}</a></span></li>
+            <li><span>{t('contact.salesManagerLabel')}:</span><span>{t('contact.salesManagerValue')}</span></li>
+            <li><span>{t('contact.hours')}:</span><span>{t('contact.hoursValue')}</span></li>
           </ul>
           <div className="footer-language">
             <h4 className="footer-col-title">{t('footer.language')}</h4>

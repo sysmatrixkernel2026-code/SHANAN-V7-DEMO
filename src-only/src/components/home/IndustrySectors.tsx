@@ -15,11 +15,11 @@ const AUTOPLAY_MS = 3000;
 
 const sectors: Sector[] = [
   { id: 'sec1', image: 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
-  { id: 'sec2', image: 'https://images.pexels.com/photos/1170/pexels-photo-1170.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
-  { id: 'sec3', image: 'https://images.pexels.com/photos/1086399/pexels-photo-1086399.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
+  { id: 'sec2', image: 'https://images.pexels.com/photos/1797270/pexels-photo-1797270.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
+  { id: 'sec3', image: 'https://images.pexels.com/photos/2607249/pexels-photo-2607249.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
   { id: 'sec4', image: 'https://images.pexels.com/photos/633850/machine-mill-industry-steam-633850.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
   { id: 'sec5', image: 'https://images.pexels.com/photos/93400/pexels-photo-93400.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
-  { id: 'sec6', image: 'https://images.pexels.com/photos/2633418/pexels-photo-2633418.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
+  { id: 'sec6', image: 'https://images.pexels.com/photos/1142990/pexels-photo-1142990.jpeg?auto=compress&cs=tinysrgb&h=700&w=1000' },
 ];
 
 export default function IndustrySectors() {

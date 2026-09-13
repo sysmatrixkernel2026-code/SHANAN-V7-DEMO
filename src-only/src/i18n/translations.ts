@@ -504,8 +504,15 @@ export type TranslationKey =
   | 'contact.emailLabel'
   | 'contact.hours'
   | 'contact.hoursValue'
-  | 'contact.comingSoon'
-  | 'contact.comingSoonDesc'
+  | 'contact.companyName'
+  | 'contact.addressValue'
+  | 'contact.phoneValue'
+  | 'contact.emailValue'
+  | 'contact.websiteLabel'
+  | 'contact.websiteValue'
+  | 'contact.salesManagerLabel'
+  | 'contact.salesManagerValue'
+  | 'contact.infoNote'
   // Portal
   | 'portal.loginTitle'
   | 'portal.loginSubtitle'
@@ -1939,8 +1946,15 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'contact.emailLabel': { en: 'Email', ar: 'البريد الإلكتروني' },
   'contact.hours': { en: 'Working Hours', ar: 'ساعات العمل' },
   'contact.hoursValue': { en: 'Sun–Thu, 8:00 AM – 5:00 PM', ar: 'الأحد–الخميس، 8:00 ص – 5:00 م' },
-  'contact.comingSoon': { en: 'Contact information coming soon', ar: 'معلومات الاتصال ستتوفر قريبًا' },
-  'contact.comingSoonDesc': { en: 'Company address, phone, and email will be published here once confirmed. Use the message form below for any inquiry.', ar: 'سيتم نشر عنوان الشركة وهاتفها وبريدها الإلكتروني هنا بمجرد تأكيدها. استخدم نموذج الرسالة أدناه لأي استفسار.' },
+  'contact.companyName': { en: 'SHANAN INDUSTRIAL EQUIPMENT EST.', ar: 'مؤسسة شانان للتجهيزات الصناعية' },
+  'contact.addressValue': { en: 'Amman – Al-Wehdat – Prince Al-Hassan Street – Building 278', ar: 'عمّان – الوحدات – شارع الأمير الحسن – بناية 278' },
+  'contact.phoneValue': { en: '0791151444 · 064730990 · 0791505006', ar: '0791151444 · 064730990 · 0791505006' },
+  'contact.emailValue': { en: 'info@shanantools.com', ar: 'info@shanantools.com' },
+  'contact.websiteLabel': { en: 'Website', ar: 'الموقع الإلكتروني' },
+  'contact.websiteValue': { en: 'www.shanantools.com', ar: 'www.shanantools.com' },
+  'contact.salesManagerLabel': { en: 'Sales Manager', ar: 'مدير المبيعات' },
+  'contact.salesManagerValue': { en: 'Abdul Latif Al-Alawneh — 0795310204', ar: 'عبد اللطيف العلاونة — 0795310204' },
+  'contact.infoNote': { en: 'For quotes and availability, contact the sales team directly by phone or email, or use the form below.', ar: 'للحصول على عروض الأسعار والتوفر، تواصل مع فريق المبيعات مباشرة عبر الهاتف أو البريد الإلكتروني، أو استخدم النموذج أدناه.' },
 
   // ---- Customer Portal ----
   'portal.loginTitle': { en: 'SHANAN Customer Portal', ar: 'بوابة عملاء شانان' },

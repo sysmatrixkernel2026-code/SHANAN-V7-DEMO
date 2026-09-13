@@ -142,7 +142,7 @@ export default function HeroShowcase() {
         <div className="container">
           <div className="ee-hero-content">
             <div className="ee-hero-logo-tile">
-              <img src="/shanan-logo.png" alt="SHANAN" width="140" height="44" />
+              <img src="/shanan-logo.png" alt="SHANAN" width="104" height="104" />
             </div>
             <p className="ee-hero-brand-line">{t('home.heroBrandLine')}</p>
             <h1 className="ee-hero-headline">{t('home.heroTitle')}</h1>

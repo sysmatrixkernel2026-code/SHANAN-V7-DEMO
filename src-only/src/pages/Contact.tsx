@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { MapPinIcon, PhoneIcon, MailIcon, ClockIcon, CheckIcon } from '../components/icons';
+import { MapPinIcon, PhoneIcon, MailIcon, ClockIcon, GlobeIcon, UsersIcon, CheckIcon } from '../components/icons';
 
 export default function Contact() {
   const { t } = useLanguage();
@@ -37,9 +37,11 @@ export default function Contact() {
   };
 
   const contactInfo = [
-    { icon: <MapPinIcon />, label: t('contact.address'), value: t('contact.comingSoon'), link: null },
-    { icon: <PhoneIcon />, label: t('contact.phoneLabel'), value: t('contact.comingSoon'), link: null },
-    { icon: <MailIcon />, label: t('contact.emailLabel'), value: t('contact.comingSoon'), link: null },
+    { icon: <MapPinIcon />, label: t('contact.address'), value: t('contact.addressValue'), link: null },
+    { icon: <PhoneIcon />, label: t('contact.phoneLabel'), value: t('contact.phoneValue'), link: null },
+    { icon: <MailIcon />, label: t('contact.emailLabel'), value: t('contact.emailValue'), link: 'mailto:info@shanantools.com' },
+    { icon: <GlobeIcon />, label: t('contact.websiteLabel'), value: t('contact.websiteValue'), link: 'https://www.shanantools.com' },
+    { icon: <UsersIcon />, label: t('contact.salesManagerLabel'), value: t('contact.salesManagerValue'), link: null },
     { icon: <ClockIcon />, label: t('contact.hours'), value: t('contact.hoursValue'), link: null },
   ];
 
@@ -59,6 +61,7 @@ export default function Contact() {
           {/* Contact info */}
           <div className="contact-info">
             <h2 className="contact-info-title">{t('contact.info')}</h2>
+            <p className="contact-info-company">{t('contact.companyName')}</p>
             <div className="contact-info-list">
               {contactInfo.map((info, i) => (
                 <div key={i} className="contact-info-item">
@@ -70,15 +73,13 @@ export default function Contact() {
                         {info.value}
                       </a>
                     ) : (
-                      <span className={`contact-info-value ${info.value === t('contact.comingSoon') ? 'contact-info-value-muted' : ''}`}>
-                        {info.value}
-                      </span>
+                      <span className="contact-info-value">{info.value}</span>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-            <p className="contact-info-available-note">{t('contact.comingSoonDesc')}</p>
+            <p className="contact-info-available-note">{t('contact.infoNote')}</p>
           </div>
 
           {/* Contact form */}
