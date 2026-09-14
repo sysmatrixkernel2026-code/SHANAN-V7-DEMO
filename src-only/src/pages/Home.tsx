@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <div className="home">
       {/* 01 — Cinematic Hero */}
-      <HeroShowcase />
+      <HeroShowcase stats={stats} />
 
       {/* 02 — SHANAN LIVE */}
       <MarketTicker />

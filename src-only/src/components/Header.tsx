@@ -27,6 +27,8 @@ export default function Header() {
     }
   };
 
+  const closeMenu = () => setMobileMenuOpen(false);
+
   const navItems = [
     { to: '/', label: t('nav.home') },
     { to: '/catalog', label: t('nav.catalog') },
@@ -37,50 +39,42 @@ export default function Header() {
     { to: '/contact', label: t('nav.contact') },
   ];
 
+  const langSwitch = (
+    <div className="lang-switcher-group">
+      <button
+        type="button"
+        className={`lang-switcher-btn ${locale === 'en' ? 'lang-switcher-active' : ''}`}
+        onClick={() => locale !== 'en' && toggleLocale()}
+      >
+        English
+      </button>
+      <span className="lang-switcher-sep">|</span>
+      <button
+        type="button"
+        className={`lang-switcher-btn ${locale === 'ar' ? 'lang-switcher-active' : ''}`}
+        onClick={() => locale !== 'ar' && toggleLocale()}
+      >
+        العربية
+      </button>
+    </div>
+  );
+
   return (
     <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
-      {/* Top bar */}
-      <div className="header-topbar">
-        <div className="container header-topbar-inner">
-          <span className="header-topbar-text">{t('home.placeholderNotice')}</span>
-          <div className="header-topbar-actions">
-            <Link to="/supply-request" className="header-topbar-link">
-              <CartIcon />
-              <span>{t('nav.supplyRequest')}</span>
-              {itemCount > 0 && <span className="header-topbar-badge">{itemCount}</span>}
-            </Link>
-            <span className="header-topbar-divider" />
-            <div className="lang-switcher-group">
-              <button
-                className={`lang-switcher-btn ${locale === 'en' ? 'lang-switcher-active' : ''}`}
-                onClick={() => locale !== 'en' && toggleLocale()}
-              >
-                English
-              </button>
-              <span className="lang-switcher-sep">|</span>
-              <button
-                className={`lang-switcher-btn ${locale === 'ar' ? 'lang-switcher-active' : ''}`}
-                onClick={() => locale !== 'ar' && toggleLocale()}
-              >
-                العربية
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main header */}
+      {/* Primary row */}
       <div className="header-main">
         <div className="container header-main-inner">
-          <Link to="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
-            <img src="/shanan-logo.png" alt="SHANAN — Engineering Knowledge Platform" className="logo-mark-img" width="44" height="44" />
-            <span className="logo-text">
-              <span className="logo-name">SHANAN</span>
-              <span className="logo-tagline">{t('brand.tagline')}</span>
-            </span>
+          <Link to="/" className="logo" onClick={closeMenu} aria-label="SHANAN — Home">
+            <img
+              src="/shanan-logo.svg"
+              alt="SHANAN — Engineering Knowledge Platform"
+              className="logo-mark-img"
+              width="360"
+              height="116"
+            />
           </Link>
 
-          <form className="header-search" onSubmit={handleSearch}>
+          <form className="header-search" onSubmit={handleSearch} role="search">
             <SearchIcon />
             <input
               type="search"
@@ -95,14 +89,23 @@ export default function Header() {
             </button>
           </form>
 
-          <Link to="/supply-request" className="header-supply-badge" aria-label={t('nav.supplyRequest')}>
+          <Link to="/supply-request" className="header-cta" onClick={closeMenu} aria-label={t('nav.supplyRequest')}>
             <CartIcon />
-            {itemCount > 0 && <span className="header-supply-count">{itemCount}</span>}
+            <span className="header-cta-text">{t('nav.supplyRequest')}</span>
+            {itemCount > 0 && <span className="header-supply-count header-cta-count">{itemCount}</span>}
+          </Link>
+
+          <div className="header-lang">{langSwitch}</div>
+
+          <Link to="/login" className="header-signin" onClick={closeMenu}>
+            <UserIcon />
+            <span className="header-signin-text">{t('nav.signIn')}</span>
           </Link>
 
           <button
+            type="button"
             className="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setMobileMenuOpen(v => !v)}
             aria-label={t('common.ariaMenu')}
             aria-expanded={mobileMenuOpen}
           >
@@ -111,20 +114,46 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Navigation bar */}
+      {/* Secondary navigation */}
       <nav className={`header-nav ${mobileMenuOpen ? 'header-nav-open' : ''}`}>
         <div className="container header-nav-inner">
+          <div className="header-nav-mobile-top">
+            <form className="header-nav-search" onSubmit={handleSearch} role="search">
+              <SearchIcon />
+              <input
+                type="search"
+                className="header-nav-search-input"
+                placeholder={t('nav.searchPlaceholder')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label={t('nav.search')}
+              />
+            </form>
+          </div>
+
           {navItems.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) => `header-nav-link ${isActive ? 'header-nav-link-active' : ''}`}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMenu}
             >
               {item.label}
             </NavLink>
           ))}
+
+          <div className="header-nav-mobile-actions">
+            <Link to="/supply-request" className="header-nav-mobile-btn" onClick={closeMenu}>
+              <CartIcon />
+              <span>{t('nav.supplyRequest')}</span>
+            </Link>
+            <Link to="/login" className="header-nav-mobile-btn" onClick={closeMenu}>
+              <UserIcon />
+              <span>{t('nav.signIn')}</span>
+            </Link>
+            {langSwitch}
+          </div>
         </div>
       </nav>
     </header>
@@ -143,6 +172,13 @@ function CartIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  );
+}
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
     </svg>
   );
 }

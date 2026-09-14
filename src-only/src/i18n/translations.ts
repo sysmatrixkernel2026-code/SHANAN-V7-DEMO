@@ -9,6 +9,7 @@ export type TranslationKey =
   | 'nav.supplyRequest'
   | 'nav.about'
   | 'nav.contact'
+  | 'nav.signIn'
   | 'nav.searchPlaceholder'
   | 'nav.search'
   | 'lang.switch'
@@ -18,6 +19,7 @@ export type TranslationKey =
   | 'home.heroTitle'
   | 'home.heroSubtitle'
   | 'home.heroCta'
+  | 'home.heroQuote'
   | 'home.heroSecondary'
   | 'home.heroPill1'
   | 'home.heroPill2'
@@ -25,6 +27,11 @@ export type TranslationKey =
   | 'home.heroPill4'
   | 'home.heroCapabilityLabel'
   | 'home.heroBrandLine'
+  | 'home.ai.aria'
+  | 'home.agents.eyebrow'
+  | 'home.agents.title'
+  | 'home.agents.gateway'
+  | 'home.agents.readiness'
   | 'home.showcase.slideLabel'
   | 'home.showcase.productBadge'
   | 'home.showcase.productTitle'
@@ -1559,6 +1566,7 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'nav.supplyRequest': { en: 'Supply Request', ar: 'طلب توريد' },
   'nav.about': { en: 'About', ar: 'من نحن' },
   'nav.contact': { en: 'Contact', ar: 'اتصل بنا' },
+  'nav.signIn': { en: 'Sign In', ar: 'تسجيل الدخول' },
   'nav.searchPlaceholder': { en: 'Search products, SKU, brand, category…', ar: 'ابحث عن المنتجات، رمز المنتج، العلامة التجارية، الفئة…' },
   'nav.search': { en: 'Search', ar: 'بحث' },
   'nav.adminDashboard': { en: 'Internal', ar: 'لوحة التحكم' },
@@ -1575,7 +1583,8 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
 
   'home.heroTitle': { en: 'Smarter Industrial Procurement', ar: 'التوريد الصناعي، بشكل أذكى' },
   'home.heroSubtitle': { en: 'A unified platform that helps engineers, contractors, and procurement teams discover industrial products, access technical knowledge, compare relevant information, and submit supply requests efficiently.', ar: 'منصة موحدة تساعد المهندسين والمقاولين وفرق المشتريات على اكتشاف المنتجات الصناعية، الوصول إلى المعرفة الفنية، ومقارنة المعلومات وتقديم طلبات التوريد بسهولة.' },
-  'home.heroCta': { en: 'Browse Catalog', ar: 'تصفح الكتالوج' },
+  'home.heroCta': { en: 'Explore Products', ar: 'استكشف المنتجات' },
+  'home.heroQuote': { en: 'Request a Quote', ar: 'اطلب عرض سعر' },
   'home.heroSecondary': { en: 'Submit a Supply Request', ar: 'قدم طلب توريد' },
   'home.heroPill1': { en: 'Engineering Products', ar: 'منتجات هندسية' },
   'home.heroPill2': { en: 'Technical Specifications', ar: 'مواصفات فنية' },
@@ -1583,6 +1592,11 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.heroPill4': { en: 'Supply Requests', ar: 'طلبات توريد' },
   'home.heroCapabilityLabel': { en: 'Platform Capacity', ar: 'سعة المنصة' },
   'home.heroBrandLine': { en: 'Professional Industrial Equipment & Procurement Platform', ar: 'منصة احترافية للمعدات الصناعية والمشتريات' },
+  'home.ai.aria': { en: 'AI agents working for you — AI readiness indicator', ar: 'وكلاء الذكاء الاصطناعي يعملون من أجلك — مؤشر الجاهزية الذكية' },
+  'home.agents.eyebrow': { en: 'AI Agents at Work', ar: 'وكلاء ذكاء اصطناعي يعملون' },
+  'home.agents.title': { en: 'AI Agents Working for You', ar: 'وكلاء ذكاء اصطناعي يعملون من أجلك' },
+  'home.agents.gateway': { en: 'Every AI connection is governed by the SHANAN AI Gateway, activated per capability and availability.', ar: 'كل اتصال ذكاء اصطناعي محكوم عبر بوابة شانان للذكاء الاصطناعي، ويُفعّل حسب القدرة والتوافر.' },
+  'home.agents.readiness': { en: 'AI-Readiness Indicator', ar: 'مؤشر الجاهزية الذكية' },
   'home.showcase.slideLabel': { en: 'Slide', ar: 'شريحة' },
   'home.showcase.productBadge': { en: 'Product Campaign', ar: 'حملة منتج' },
   'home.showcase.productTitle': { en: 'Industrial Supply, Unified', ar: 'التوريد الصناعي، موحّد' },

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { ArrowIcon } from './icons';
 import { usePrefersReducedMotion } from './home/usePrefersReducedMotion';
+import AiAgentsPanel from './home/AiAgentsPanel';
 
 // The brand film is prepared as a future controlled capability. Until the
 // production film asset exists, FILM_SRC stays empty and the player falls
@@ -95,7 +96,11 @@ const slides: Slide[] = [
 
 const SLIDE_DURATION = 6000;
 
-export default function HeroShowcase() {
+export default function HeroShowcase({
+  stats,
+}: {
+  stats: { products: string; categories: string; brands: string } | null;
+}) {
   const { t } = useLanguage();
   const reducedMotion = usePrefersReducedMotion();
   const [current, setCurrent] = useState(0);
@@ -140,32 +145,63 @@ export default function HeroShowcase() {
         <div className="ee-hero-shade ee-hero-shade-alt" />
 
         <div className="container ee-hero-copy-wrap">
-          <div className="ee-hero-content">
-            <div className="ee-hero-logo-tile">
-              <img src="/shanan-logo.png" alt="SHANAN" width="104" height="104" />
+          <div className="ee-hero-copy-grid">
+            <div className="ee-hero-copy">
+              <div className="ee-hero-logo">
+                <img
+                  src="/shanan-logo.svg"
+                  alt="SHANAN"
+                  width="360"
+                  height="116"
+                  className="ee-hero-logo-img"
+                />
+              </div>
+              <p className="ee-hero-brand-line">{t('home.heroBrandLine')}</p>
+              <h1 className="ee-hero-headline">{t('home.heroTitle')}</h1>
+              <p className="ee-hero-subtitle">{t('home.heroSubtitle')}</p>
+              <div className="ee-hero-pills">
+                <span className="ee-hero-pill">{t('home.heroPill1')}</span>
+                <span className="ee-hero-pill">{t('home.heroPill2')}</span>
+                <span className="ee-hero-pill">{t('home.heroPill3')}</span>
+                <span className="ee-hero-pill">{t('home.heroPill4')}</span>
+              </div>
+              <div className="ee-hero-actions">
+                <Link to="/catalog" className="btn btn-primary btn-lg ee-hero-cta">
+                  {t('home.heroCta')}
+                  <ArrowIcon />
+                </Link>
+                <Link to="/supply-request" className="btn btn-outline btn-lg ee-hero-cta-quote">
+                  <QuoteGlyph />
+                  {t('home.heroQuote')}
+                </Link>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-lg ee-hero-story"
+                  onClick={() => setFilmOpen(true)}
+                >
+                  <PlayGlyph />
+                  {t('home.hero.watchStory')}
+                </button>
+              </div>
+              {stats && (
+                <div className="ee-hero-stats" aria-label={t('home.heroCapabilityLabel')}>
+                  <div className="ee-hero-stat">
+                    <span className="ee-hero-stat-value">{stats.products}</span>
+                    <span className="ee-hero-stat-label">{t('home.statsProducts')}</span>
+                  </div>
+                  <div className="ee-hero-stat">
+                    <span className="ee-hero-stat-value">{stats.categories}</span>
+                    <span className="ee-hero-stat-label">{t('home.statsCategories')}</span>
+                  </div>
+                  <div className="ee-hero-stat">
+                    <span className="ee-hero-stat-value">{stats.brands}</span>
+                    <span className="ee-hero-stat-label">{t('home.statsBrands')}</span>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="ee-hero-brand-line">{t('home.heroBrandLine')}</p>
-            <h1 className="ee-hero-headline">{t('home.heroTitle')}</h1>
-            <p className="ee-hero-subtitle">{t('home.heroSubtitle')}</p>
-            <div className="ee-hero-pills">
-              <span className="ee-hero-pill">{t('home.heroPill1')}</span>
-              <span className="ee-hero-pill">{t('home.heroPill2')}</span>
-              <span className="ee-hero-pill">{t('home.heroPill3')}</span>
-              <span className="ee-hero-pill">{t('home.heroPill4')}</span>
-            </div>
-            <div className="ee-hero-actions">
-              <Link to="/catalog" className="btn btn-primary btn-lg ee-hero-cta">
-                {t('home.heroCta')}
-                <ArrowIcon />
-              </Link>
-              <button
-                type="button"
-                className="btn btn-outline btn-lg ee-hero-story"
-                onClick={() => setFilmOpen(true)}
-              >
-                <PlayGlyph />
-                {t('home.hero.watchStory')}
-              </button>
+            <div className="ee-hero-side">
+              <AiAgentsPanel />
             </div>
           </div>
         </div>
@@ -411,6 +447,16 @@ function PlayGlyph() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function QuoteGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
     </svg>
   );
 }
