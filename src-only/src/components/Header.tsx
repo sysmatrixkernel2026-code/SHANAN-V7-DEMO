@@ -65,13 +65,11 @@ export default function Header() {
       <div className="header-main">
         <div className="container header-main-inner">
           <Link to="/" className="logo" onClick={closeMenu} aria-label="SHANAN — Home">
-            <img
-              src="/shanan-logo.svg"
-              alt="SHANAN — Engineering Knowledge Platform"
-              className="logo-mark-img"
-              width="360"
-              height="116"
-            />
+            <img src="/shanan-logo.png" alt="SHANAN — Engineering Knowledge Platform" className="logo-mark-img" width="44" height="44" />
+            <span className="logo-text">
+              <span className="logo-name">SHANAN</span>
+              <span className="logo-tagline">{t('brand.tagline')}</span>
+            </span>
           </Link>
 
           <form className="header-search" onSubmit={handleSearch} role="search">

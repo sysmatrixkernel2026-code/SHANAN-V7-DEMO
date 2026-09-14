@@ -147,14 +147,8 @@ export default function HeroShowcase({
         <div className="container ee-hero-copy-wrap">
           <div className="ee-hero-copy-grid">
             <div className="ee-hero-copy">
-              <div className="ee-hero-logo">
-                <img
-                  src="/shanan-logo.svg"
-                  alt="SHANAN"
-                  width="360"
-                  height="116"
-                  className="ee-hero-logo-img"
-                />
+              <div className="ee-hero-logo-tile">
+                <img src="/shanan-logo.png" alt="SHANAN" width="104" height="104" />
               </div>
               <p className="ee-hero-brand-line">{t('home.heroBrandLine')}</p>
               <h1 className="ee-hero-headline">{t('home.heroTitle')}</h1>

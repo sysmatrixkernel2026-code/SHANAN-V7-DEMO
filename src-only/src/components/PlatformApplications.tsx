@@ -212,7 +212,7 @@ export default function PlatformApplications() {
                             <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
                           ) : (
                             <span className="apps-product-empty">
-                              <img src="/shanan-mark.svg" alt="" />
+                              <img src="/shanan-logo.png" alt="" />
                             </span>
                           )}
                         </div>
@@ -370,7 +370,7 @@ export default function PlatformApplications() {
                                   <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
                                 ) : (
                                   <span className="apps-product-empty">
-                                    <img src="/shanan-mark.svg" alt="" />
+                                    <img src="/shanan-logo.png" alt="" />
                                   </span>
                                 )}
                                 {item.availability && (
