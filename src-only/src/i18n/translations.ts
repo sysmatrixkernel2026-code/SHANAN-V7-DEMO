@@ -30,6 +30,7 @@ export type TranslationKey =
   | 'home.ai.aria'
   | 'home.agents.eyebrow'
   | 'home.agents.title'
+  | 'home.agents.subtitle'
   | 'home.agents.gateway'
   | 'home.agents.readiness'
   | 'home.showcase.slideLabel'
@@ -1592,11 +1593,12 @@ export const translations: Record<TranslationKey, Record<Locale, string>> = {
   'home.heroPill4': { en: 'Supply Requests', ar: 'طلبات توريد' },
   'home.heroCapabilityLabel': { en: 'Platform Capacity', ar: 'سعة المنصة' },
   'home.heroBrandLine': { en: 'Professional Industrial Equipment & Procurement Platform', ar: 'منصة احترافية للمعدات الصناعية والمشتريات' },
-  'home.ai.aria': { en: 'AI agents working for you — AI readiness indicator', ar: 'وكلاء الذكاء الاصطناعي يعملون من أجلك — مؤشر الجاهزية الذكية' },
-  'home.agents.eyebrow': { en: 'AI Agents at Work', ar: 'وكلاء ذكاء اصطناعي يعملون' },
-  'home.agents.title': { en: 'AI Agents Working for You', ar: 'وكلاء ذكاء اصطناعي يعملون من أجلك' },
-  'home.agents.gateway': { en: 'Every AI connection is governed by the SHANAN AI Gateway, activated per capability and availability.', ar: 'كل اتصال ذكاء اصطناعي محكوم عبر بوابة شانان للذكاء الاصطناعي، ويُفعّل حسب القدرة والتوافر.' },
-  'home.agents.readiness': { en: 'AI-Readiness Indicator', ar: 'مؤشر الجاهزية الذكية' },
+  'home.ai.aria': { en: 'AI agents — SHANAN AI-ready multi-model ecosystem indicator', ar: 'وكلاء ذكاء اصطناعي — مؤشر نظام شانان متعدد النماذج الجاهز للذكاء الاصطناعي' },
+  'home.agents.eyebrow': { en: 'AI Ecosystem', ar: 'نظام الذكاء الاصطناعي' },
+  'home.agents.title': { en: 'AI Agents', ar: 'وكلاء ذكاء اصطناعي' },
+  'home.agents.subtitle': { en: 'Multi-model · Multi-agent architecture', ar: 'بنية متعددة النماذج والوكلاء' },
+  'home.agents.gateway': { en: 'Powered through the SHANAN AI Gateway — AI-ready, activated per capability and availability.', ar: 'مدعوم عبر بوابة شانان للذكاء الاصطناعي — جاهز للذكاء الاصطناعي، ويُفعّل حسب القدرة والتوافر.' },
+  'home.agents.readiness': { en: 'AI-READY ECOSYSTEM', ar: 'نظام جاهز للذكاء الاصطناعي' },
   'home.showcase.slideLabel': { en: 'Slide', ar: 'شريحة' },
   'home.showcase.productBadge': { en: 'Product Campaign', ar: 'حملة منتج' },
   'home.showcase.productTitle': { en: 'Industrial Supply, Unified', ar: 'التوريد الصناعي، موحّد' },

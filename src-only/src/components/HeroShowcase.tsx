@@ -30,7 +30,7 @@ const slides: Slide[] = [
   {
     id: 'product',
     type: 'product',
-    image: 'https://images.pexels.com/photos/633850/machine-mill-industry-steam-633850.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    image: 'https://images.pexels.com/photos/633850/machine-mill-industry-steam-633850.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.productBadge',
     titleKey: 'home.showcase.productTitle',
     descKey: 'home.showcase.productDesc',
@@ -42,7 +42,7 @@ const slides: Slide[] = [
   {
     id: 'video',
     type: 'video',
-    image: 'https://images.pexels.com/photos/10290624/pexels-photo-10290624.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    image: 'https://images.pexels.com/photos/19233057/pexels-photo-19233057.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.videoBadge',
     titleKey: 'home.showcase.videoTitle',
     descKey: 'home.showcase.videoDesc',
@@ -54,7 +54,7 @@ const slides: Slide[] = [
   {
     id: 'offer',
     type: 'offer',
-    image: 'https://images.pexels.com/photos/17728787/pexels-photo-17728787.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    image: 'https://images.pexels.com/photos/33514501/pexels-photo-33514501.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.offerBadge',
     titleKey: 'home.showcase.offerTitle',
     descKey: 'home.showcase.offerDesc',
@@ -67,7 +67,7 @@ const slides: Slide[] = [
   {
     id: 'announce',
     type: 'announce',
-    image: 'https://images.pexels.com/photos/30335395/pexels-photo-30335395.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    image: 'https://images.pexels.com/photos/8973680/pexels-photo-8973680.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.announceBadge',
     titleKey: 'home.showcase.announceTitle',
     descKey: 'home.showcase.announceDesc',
@@ -79,7 +79,7 @@ const slides: Slide[] = [
   {
     id: 'event',
     type: 'event',
-    image: 'https://images.pexels.com/photos/860227/pexels-photo-860227.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
+    image: 'https://images.pexels.com/photos/12703176/pexels-photo-12703176.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.eventBadge',
     titleKey: 'home.showcase.eventTitle',
     descKey: 'home.showcase.eventDesc',

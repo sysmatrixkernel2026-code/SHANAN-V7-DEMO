@@ -208,8 +208,12 @@ export default function PlatformApplications() {
                     {phoneItems.map((item, i) => (
                       <div className="phone-app-product" key={item.id ?? `phone-${i}`}>
                         <div className={`phone-app-product-img ${phoneThumbClass(item.slug)}`}>
-                          {item.image && (
+                          {item.image ? (
                             <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                          ) : (
+                            <span className="apps-product-empty">
+                              <img src="/shanan-mark.svg" alt="" />
+                            </span>
                           )}
                         </div>
                         <div className="phone-app-product-meta">
@@ -362,8 +366,12 @@ export default function PlatformApplications() {
                           {laptopItems.map((item, i) => (
                             <div className="laptop-product-card" key={item.id ?? `laptop-${i}`}>
                               <div className={`laptop-product-img ${laptopThumbClass(item.slug)}`} style={{ position: 'relative', overflow: 'hidden' }}>
-                                {item.image && (
+                                {item.image ? (
                                   <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                                ) : (
+                                  <span className="apps-product-empty">
+                                    <img src="/shanan-mark.svg" alt="" />
+                                  </span>
                                 )}
                                 {item.availability && (
                                   <span className={`laptop-product-badge${laptopBadgeClass(item.availability)}`}>{availLabel(item.availability)}</span>

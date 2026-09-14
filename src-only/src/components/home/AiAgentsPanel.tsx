@@ -2,7 +2,19 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 
-const AGENTS = ['Claude', 'OpenAI', 'Gemini', 'Qwen', 'Llama'] as const;
+/**
+ * AI Agents panel — visual representation of SHANAN's multi-model / multi-agent
+ * architecture. Providers are shown as brand-color wordmarks (official logos are
+ * NOT reproduced). The panel is an AI-READINESS indicator, never a claim that
+ * every provider is currently connected.
+ */
+const AGENTS = [
+  { name: 'Claude', cls: 'ee-ai-agent-claude' },
+  { name: 'OpenAI', cls: 'ee-ai-agent-openai' },
+  { name: 'Gemini', cls: 'ee-ai-agent-gemini' },
+  { name: 'Qwen', cls: 'ee-ai-agent-qwen' },
+  { name: 'Llama', cls: 'ee-ai-agent-llama' },
+] as const;
 
 export default function AiAgentsPanel() {
   const { t } = useLanguage();
@@ -23,28 +35,25 @@ export default function AiAgentsPanel() {
           {t('home.agents.eyebrow')}
         </span>
         <h3 className="ee-ai-agents-title">{t('home.agents.title')}</h3>
+        <p className="ee-ai-agents-subtitle">{t('home.agents.subtitle')}</p>
       </div>
       <ul className="ee-ai-agents-list">
-        {AGENTS.map((name, i) => (
-          <li key={name} className={`ee-ai-agent ${active === i ? 'ee-ai-agent-on' : ''}`}>
-            <span className="ee-ai-agent-icon" aria-hidden="true">
-              <SparkGlyph />
+        {AGENTS.map((a, i) => (
+          <li key={a.name} className={`ee-ai-agent ${a.cls} ${active === i ? 'ee-ai-agent-on' : ''}`}>
+            <span className="ee-ai-agent-badge" aria-hidden="true">
+              {a.name.charAt(0)}
             </span>
-            <span className="ee-ai-agent-name">{name}</span>
-            <span className="ee-ai-agent-dot" aria-hidden="true" />
+            <span className="ee-ai-agent-name">{a.name}</span>
+            <span className="ee-ai-agent-accent" aria-hidden="true" />
+            <span className="ee-ai-agent-idx">{`0${i + 1}`}</span>
           </li>
         ))}
       </ul>
       <p className="ee-ai-agents-note">{t('home.agents.gateway')}</p>
-      <p className="ee-ai-agents-tag">{t('home.agents.readiness')}</p>
+      <p className="ee-ai-agents-tag">
+        <span className="ee-ai-agents-tag-dot" aria-hidden="true" />
+        {t('home.agents.readiness')}
+      </p>
     </aside>
-  );
-}
-
-function SparkGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v3M12 18v3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M3 12h3M18 12h3M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12" />
-    </svg>
   );
 }
