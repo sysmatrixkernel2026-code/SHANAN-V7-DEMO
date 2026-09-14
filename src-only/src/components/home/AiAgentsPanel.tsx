@@ -4,16 +4,16 @@ import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 
 /**
  * AI Agents panel — visual representation of SHANAN's multi-model / multi-agent
- * architecture. Providers are shown as brand-color wordmarks (official logos are
- * NOT reproduced). The panel is an AI-READINESS indicator, never a claim that
- * every provider is currently connected.
+ * architecture. Providers are shown with their official brand marks. The panel
+ * is an AI-READINESS indicator, never a claim that every provider is currently
+ * connected.
  */
 const AGENTS = [
-  { name: 'Claude', cls: 'ee-ai-agent-claude' },
-  { name: 'OpenAI', cls: 'ee-ai-agent-openai' },
-  { name: 'Gemini', cls: 'ee-ai-agent-gemini' },
-  { name: 'Qwen', cls: 'ee-ai-agent-qwen' },
-  { name: 'Llama', cls: 'ee-ai-agent-llama' },
+  { name: 'Claude', cls: 'ee-ai-agent-claude', mark: '/brand/claude.svg' },
+  { name: 'OpenAI', cls: 'ee-ai-agent-openai', mark: '/brand/openai.svg' },
+  { name: 'Gemini', cls: 'ee-ai-agent-gemini', mark: '/brand/gemini.svg' },
+  { name: 'Qwen', cls: 'ee-ai-agent-qwen', mark: '/brand/qwen.svg' },
+  { name: 'Llama', cls: 'ee-ai-agent-llama', mark: '/brand/llama.svg' },
 ] as const;
 
 export default function AiAgentsPanel() {
@@ -40,8 +40,8 @@ export default function AiAgentsPanel() {
       <ul className="ee-ai-agents-list">
         {AGENTS.map((a, i) => (
           <li key={a.name} className={`ee-ai-agent ${a.cls} ${active === i ? 'ee-ai-agent-on' : ''}`}>
-            <span className="ee-ai-agent-badge" aria-hidden="true">
-              {a.name.charAt(0)}
+            <span className="ee-ai-agent-img" aria-hidden="true">
+              <img src={a.mark} alt="" width={30} height={30} />
             </span>
             <span className="ee-ai-agent-name">{a.name}</span>
             <span className="ee-ai-agent-accent" aria-hidden="true" />
