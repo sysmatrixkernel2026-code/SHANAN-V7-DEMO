@@ -79,7 +79,7 @@ const slides: Slide[] = [
   {
     id: 'event',
     type: 'event',
-    image: 'https://images.pexels.com/photos/12703176/pexels-photo-12703176.jpeg?auto=compress&cs=tinysrgb&w=1920',
+    image: 'https://images.pexels.com/photos/4481326/pexels-photo-4481326.jpeg?auto=compress&cs=tinysrgb&w=1920',
     badgeKey: 'home.showcase.eventBadge',
     titleKey: 'home.showcase.eventTitle',
     descKey: 'home.showcase.eventDesc',

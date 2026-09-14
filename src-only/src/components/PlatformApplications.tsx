@@ -29,6 +29,8 @@ interface MockupItem {
   image?: string | null;
   slug?: string;
   availability?: Availability;
+  sellPrice?: number;
+  currency?: string;
 }
 
 const PHONE_SLUGS = ['bearings', 'electrical', 'tools'];
@@ -54,6 +56,20 @@ function resolveImageUrl(raw?: string | null): string | null {
   return base + (raw.startsWith('/') ? raw : '/' + raw);
 }
 
+function ShowcaseImage({ src }: { src?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <span className="apps-product-empty">
+        <img src="/shanan-logo.png" alt="" />
+      </span>
+    );
+  }
+  return (
+    <img src={src} alt="" onError={() => setFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+  );
+}
+
 export default function PlatformApplications() {
   const { t, locale } = useLanguage();
 
@@ -66,36 +82,28 @@ export default function PlatformApplications() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProducts({ search: '', categoryId: null, brandId: null, availability: null, sortBy: 'newest', page: 1, pageSize: 9 })
+    fetchProducts({ search: '', categoryId: null, brandId: null, availability: null, sortBy: 'newest', page: 1, pageSize: 60 })
       .then(result => {
         if (cancelled) return;
         const products = result.items;
-        const toPhone = (i: number): MockupItem => {
-          const p = products[i];
-          if (!p) return { slug: PHONE_SLUGS[i], image: null, availability: undefined };
-          return {
-            id: p.id,
-            name: p.name[locale],
-            sku: p.sku,
-            slug: p.category?.slug ?? p.categoryId ?? PHONE_SLUGS[i],
-            image: resolveImageUrl(p.primaryImage || p.images?.[0]?.url),
-            availability: p.availability,
-          };
+        const hasImage = (p: Product) => !!(p.primaryImage || p.images?.[0]?.url);
+        const ordered = [...products.filter(hasImage), ...products.filter(p => !hasImage(p))];
+        const toItem = (p: Product, fallbackSlug: string): MockupItem => ({
+          id: p.id,
+          name: p.name[locale],
+          sku: p.sku,
+          slug: p.category?.slug ?? p.categoryId ?? fallbackSlug,
+          image: resolveImageUrl(p.primaryImage || p.images?.[0]?.url),
+          availability: p.availability,
+          sellPrice: p.sellPrice != null && p.sellPrice > 0 ? p.sellPrice : undefined,
+          currency: p.currency || 'JOD',
+        });
+        const slot = (slugs: string[], start: number): MockupItem[] => {
+          const picked = ordered.slice(start, start + slugs.length);
+          return slugs.map((slug, i) => (picked[i] ? toItem(picked[i], slug) : { slug, image: null, availability: undefined }));
         };
-        const toLaptop = (i: number): MockupItem => {
-          const p = products[i];
-          if (!p) return { slug: LAPTOP_SLUGS[i], image: null, availability: undefined };
-          return {
-            id: p.id,
-            name: p.name[locale],
-            sku: p.sku,
-            slug: p.category?.slug ?? p.categoryId ?? LAPTOP_SLUGS[i],
-            image: resolveImageUrl(p.primaryImage || p.images?.[0]?.url),
-            availability: p.availability,
-          };
-        };
-        setPhoneItems(PHONE_SLUGS.map((_, i) => toPhone(i)));
-        setLaptopItems(LAPTOP_SLUGS.map((_, i) => toLaptop(i)));
+        setPhoneItems(slot(PHONE_SLUGS, 0));
+        setLaptopItems(slot(LAPTOP_SLUGS, PHONE_SLUGS.length));
       })
       .catch(() => {
         if (cancelled) return;
@@ -208,13 +216,7 @@ export default function PlatformApplications() {
                     {phoneItems.map((item, i) => (
                       <div className="phone-app-product" key={item.id ?? `phone-${i}`}>
                         <div className={`phone-app-product-img ${phoneThumbClass(item.slug)}`}>
-                          {item.image ? (
-                            <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-                          ) : (
-                            <span className="apps-product-empty">
-                              <img src="/shanan-logo.png" alt="" />
-                            </span>
-                          )}
+                          <ShowcaseImage src={item.image} />
                         </div>
                         <div className="phone-app-product-meta">
                           {item.name && <span className="phone-app-product-name">{item.name}</span>}
@@ -222,6 +224,13 @@ export default function PlatformApplications() {
                           {item.availability && (
                             <span className={`phone-app-product-badge${phoneBadgeClass(item.availability)}`}>{availLabel(item.availability)}</span>
                           )}
+                          {item.sellPrice !== undefined ? (
+                            <span className="phone-app-product-price">
+                              {item.sellPrice.toFixed(2)} <span className="phone-app-product-currency">{item.currency}</span>
+                            </span>
+                          ) : item.name ? (
+                            <span className="phone-app-product-price-onrequest">{t('catalog.priceOnRequest')}</span>
+                          ) : null}
                         </div>
                         <span className="phone-app-product-add">+</span>
                       </div>
@@ -366,19 +375,27 @@ export default function PlatformApplications() {
                           {laptopItems.map((item, i) => (
                             <div className="laptop-product-card" key={item.id ?? `laptop-${i}`}>
                               <div className={`laptop-product-img ${laptopThumbClass(item.slug)}`} style={{ position: 'relative', overflow: 'hidden' }}>
-                                {item.image ? (
-                                  <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-                                ) : (
-                                  <span className="apps-product-empty">
-                                    <img src="/shanan-logo.png" alt="" />
-                                  </span>
-                                )}
+                                <ShowcaseImage src={item.image} />
                                 {item.availability && (
                                   <span className={`laptop-product-badge${laptopBadgeClass(item.availability)}`}>{availLabel(item.availability)}</span>
                                 )}
                               </div>
                               {item.name && <span className="laptop-product-name">{item.name}</span>}
                               {item.sku && <span className="laptop-product-sku">{item.sku}</span>}
+                              {item.sellPrice !== undefined ? (
+                                <div className="laptop-product-price-row">
+                                  <span className="laptop-product-price">{item.sellPrice.toFixed(2)}</span>
+                                  <span className="laptop-product-currency">{item.currency}</span>
+                                </div>
+                              ) : item.name ? (
+                                <span className="laptop-product-price-onrequest">{t('catalog.priceOnRequest')}</span>
+                              ) : null}
+                              {item.name && (
+                                <div className="laptop-product-actions">
+                                  <span className="laptop-product-btn">{t('catalog.details')}</span>
+                                  <span className="laptop-product-btn laptop-product-btn-primary">{t('supply.requestSupply')}</span>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
